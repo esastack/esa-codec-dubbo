@@ -12,36 +12,6 @@
     支持Dubbo Client
     多种序列化支持
 
-Dubbo协议入门
-
-注意：目前开发使用的是Dubbo 2.7.3版本，请求和响应Header格式是相同的，状态位有差异。
-1565610741707_57_image.png
-Header 一共是16个字节（byte[16] ）
-2byte magic:类似java字节码文件里的魔数，用来判断是不是dubbo协议的数据包。魔数是常量0xdabb
-1byte 的消息标志位（分为高4位和底四位）: 17请求或响应 18 two way 19 event 20-24 序列化id
-1byte 状态，当消息类型为响应时，设置响应状态。24-31位。状态位, 设置请求响应状态，
-8byte 消息ID,long类型，32-95位。每一个请求的唯一识别id（由于采用异步通讯的方式，用来把请求request和返回的response对应上）
-4byte 消息长度，96-127位。消息体 body 长度, int 类型，即记录Body Content有多少个字节。
-Java计算机位计算
-
-已知byte[] header=byte[16]字节，我们对消息标识位byte[2]数组进行示例,每一个byte[]数组对应计算机8位（bit），采用“|”进行计算
-规则是a、b对应位都为1时,c对应位为1；反之为0。
-image.png
-Int serializeType=2;
-byte FLAG_REQUEST = (byte) 0x80;
-byte FLAG_TWOWAY = (byte) 0x40;
-byte FLAG_EVENT = (byte) 0x20;
-header[2] = (byte) (FLAG_REQUEST|serializeType|FLAG_TWOWAY|FLAG_EVENT);
-计算步骤：
-
-    -128=10000000
-    -128|2=10000010
-    -128|2|64=11000010
-    -128|2|64|32=11100010
-
-1110 0010 分为高四位和低四位 因为是第三个8字节所以
-17请求或响应 18 twoway 19 event 20-24 序列化id
-可以算出结果 header[2]=-30
 ##  SDK使用说明
 #### 1、 引入Maven依赖
 ```xml   
