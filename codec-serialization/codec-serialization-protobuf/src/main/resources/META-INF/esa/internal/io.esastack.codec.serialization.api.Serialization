@@ -1,0 +1,2 @@
+pbmix=io.esastack.codec.serialization.protobuf.PbmixSerialization
+protobuf=io.esastack.codec.serialization.protobuf.ProtobufSerialization

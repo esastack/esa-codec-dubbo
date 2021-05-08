@@ -1,0 +1,1 @@
+echo=io.esastack.codec.dubbo.server.handler.telnet.handler.EchoHandler

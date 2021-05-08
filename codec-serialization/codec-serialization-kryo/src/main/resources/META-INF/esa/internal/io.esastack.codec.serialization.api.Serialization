@@ -1,0 +1,1 @@
+kryo=io.esastack.codec.serialization.kryo.KryoSerialization
