@@ -57,59 +57,42 @@ header[2] = (byte) (FLAG_REQUEST|serializeType|FLAG_TWOWAY|FLAG_EVENT);
 </dependency>
 ```
  #### 2、Dubbo Client SDK使用说明
-```java
-static NettyDubboClient dubboNettyClient;
-static {
-    DubboClientBuilder clientConfig = new DubboClientBuilder()
-        .setHost("localhost").setPort(20880)
-        .setConnectionPoolSize(64)
-        .setConnectTimeout(1000)
-        .setConnectionPoolWaitQueueSize(500)
-        .setWriteTimeout(1000);
+ ```java
+public class DubboSDKClient {
+    
+    public static void main(String[] args) throws Exception {
+        // 构建client
+        DubboClientBuilder clientConfig = new DubboClientBuilder()
+                .setHost("localhost")
+                .setPort(20880)
+                .setConnectTimeout(1000)
+                .setWriteTimeout(1000);
+        NettyDubboClient dubboNettyClient = new NettyDubboClient(clientConfig);
 
-    // this client is better than dubbo
-    dubboNettyClient = new NettyDubboClient(clientConfig);
-}
+        //构建request
+        RpcInvocation rpcInvocation = new RpcInvocation();
+        rpcInvocation.setMethodName("sayHello");
+        rpcInvocation.setParameterTypes(new Class[]{String.class});
+        rpcInvocation.setArguments(new String[]{"dubbo"});
+        rpcInvocation.setInterfaceName("org.apache.dubbo.demo.DemoService");
+        rpcInvocation.setReturnType(String.class);
 
-@Test
-public static void testSend() throws Exception {
-    DubboRequest dubboRequest = buildDubboRequest(null);
-    CompletableFuture<DubboResponse> response = dubboNettyClient.sendRequest(dubboRequest);
-    String result = handleDubboResponse(response.get());
-}
+        Map<String, String> attachments = new HashMap<>();
+        rpcInvocation.setAttachments(attachments);
 
-public static RpcInvocation buildRpcInvocation() {     
-    RpcInvocation rpcInvocation = new RpcInvocation();
-    rpcInvocation.setMethodName("sayHello");
-    rpcInvocation.setParameterTypes(new Class[]{String.class});
-    rpcInvocation.setArguments(new String[]{"dubbo"});
-    rpcInvocation.setInterfaceName("org.apache.dubbo.demo.DemoService");
-    rpcInvocation.setReturnType(String.class);
+        DubboMessage request = ClientCodecHelper.toDubboMessage(rpcInvocation);
 
-    Map<String, String> attachments = new HashMap<>();
-    rpcInvocation.setAttachments(attachments);
+        //发送请求并处理返回值
+        CompletableFuture<RpcResult> responseFuture = dubboNettyClient.sendRequest(request, String.class);
 
-    return rpcInvocationBuilder;
-}
-
-public static DubboRequest buildDubboRequest() throws IOException {
-    RpcInvocation rpcInvocation = buildRpcInvocation();
-    byte[] body = rpcInvocation.toByteArray(SerializeConstants.HESSIAN2_SERIALIZATION_ID);
-
-    DubboRequest dubboRequest = new DubboRequest()
-        .setSeriType(SerializeConstants.HESSIAN2_SERIALIZATION_ID);
-    .setBody(body);
-    return dubboRequest;
-}
-
-public static <T> T handleDubboResponse(DubboResponse response) throws IOException, ClassNotFoundException {
-    if (response == null || response.getBody() == null) {
-        throw new IllegalArgumentException("response data is null ");
+        responseFuture.whenComplete((r, t) -> {
+            if (t != null || r.getException() != null || StringUtils.isNotEmpty(r.getErrorMessage())) {
+                // 异常处理
+            }
+            // 没有异常，返回值为String，直接强转，其他返回值类型酌情处理，获取返回值以后，自行处理返回值
+            String result = (String) r.getValue();
+        });
     }
-    byte[] body = response.getBody();
-    RpcResult rpcResult = new RpcResult();
-    rpcResult.fromByteArray(body, response.getSeriType());
-    return (T) rpcResult.getResult();
 }
 ```
 
@@ -117,58 +100,63 @@ public static <T> T handleDubboResponse(DubboResponse response) throws IOExcepti
 
 
 ```java
-static ExecutorService workerThreadPool = ThreadPools.builder()
-    .corePoolSize(200)
-    .maximumPoolSize(200)
-    .useSynchronousQueue()
-    .rejectPolicy(new RejectedExecutionHandler() {
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            LoggerUtils.DUBBO_SERVER_LOG.error("rejectedExecution ");
-        }
-    }).build();
+public class DubboSDKServer {
 
-public static void main(String[] args) throws Exception {
-    NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
-        .setPort(20881)
-        .setBossThreadCount(2)
-        .setIoThreadCount(20)
-        .setUseNativeTransports(false)
-        .setBizHandler(new DubboServerBizHandler() {
-            @Override
-            public void process(DubboRequest request, DubboResponseHolder dubboResponseHolder) {
-                workerThreadPool.execute(new Runnable() {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DubboSDKServer.class);
+
+    static ExecutorService workerThreadPool =
+            ThreadPools.builder()
+                    .corePoolSize(200)
+                    .maximumPoolSize(200)
+                    .useSynchronousQueue()
+                    .rejectPolicy((r, executor) -> LOGGER.error("rejectedExecution ")).build();
+
+    public static void main(String[] args) {
+        NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
+                .setPort(20880)
+                .setBizHandler(new DubboServerBizHandler() {
                     @Override
-                    public void run() {
-                        long requestId = request.getRequestId();
-                        byte seriType = request.getSeriType();
+                    public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
+                        final RpcInvocation invocation;
+                        try {
+                            invocation = ServerCodecHelper.toRpcInvocation(request);
+                        } catch (Exception e) {
+                            //TODO 返回错误
+                            dubboResponseHolder.end(null);
+                            return;
+                        }
+                        workerThreadPool.execute(() -> {
+                            String response = "requestId:" +
+                                    invocation.getRequestId() +
+                                    " Hello " + invocation.getArguments()[0] +
+                                    ", response from provider. seriType:" +
+                                    invocation.getSeriType();
 
-                        //读取元数据，包括类名、方法名、附件等内容
-                        DubboRequestMetaData requestMetaData = DubboUtils.readRequestMetaData(request.getBody(), seriType);
-
-                        //返回结果
-                        RpcResult result = RpcResult.success("hello  world from client " + requestId + " " + seriType);
-                        byte[] body = result.toByteArray((byte) 2);
-
-                        DubboResponse dubboMessage = new DubboResponse()
-                            .setRequestId(requestId)
-                            .setSeriType(seriType)
-                            .setStatus(DubboConstants.RESPONSE_STATUS.OK)
-                            .setBody(body);
-                        dubboResponseHolder.end(dubboMessage);
+                            DubboMessage dubboResponse;
+                            try {
+                                dubboResponse = ServerCodecHelper.toDubboMessage(
+                                        RpcResult.success(
+                                                invocation.getRequestId(),
+                                                invocation.getSeriType(),
+                                                response),
+                                        request.getBody().alloc());
+                            } catch (SerializationException e) {
+                                e.printStackTrace();
+                                dubboResponseHolder.getChannelHandlerContext().channel().close();
+                            }
+                            dubboResponseHolder.end(dubboResponse);
+                        });
                     }
-                });
 
-            }
+                    @Override
+                    public void shutdown() {
 
-            @Override
-            public void shutdown() {
+                    }
+                })
+                .build();
 
-            }
-        })
-        .build();
-
-    dubboServer.start();
+        dubboServer.start();
+    }
 }
 ```
 
@@ -182,4 +170,3 @@ public static void main(String[] args) throws Exception {
     fst	
     protobuf
     protostuff
-
