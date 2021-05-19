@@ -90,9 +90,4 @@ public class DubboSDKServer {
         dubboServer.start();
         return dubboServer;
     }
-
-    public static void main(String[] args) {
-        start(args);
-    }
-
 }

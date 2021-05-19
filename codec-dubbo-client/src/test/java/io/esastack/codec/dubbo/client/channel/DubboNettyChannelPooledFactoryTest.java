@@ -33,10 +33,10 @@ import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +64,7 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
+    @Ignore
     public void create() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20880, 1000), null);
@@ -78,6 +79,7 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
+    @Ignore
     public void createRefused() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20000, 100), null);
@@ -92,6 +94,7 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
+    @Ignore
     public void connectSyncTest() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20880, 100), null);
@@ -119,6 +122,7 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
+    @Ignore
     public void handleConnectionComplete() {
         try {
             //un-success without ssl
@@ -195,6 +199,7 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
+    @Ignore
     public void handleTimeoutTest() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20000, 100), null);
@@ -273,7 +278,7 @@ public class DubboNettyChannelPooledFactoryTest {
         return builder.buildClient();
     }
 
-    private DubboSslContextBuilder getBuilder() throws IOException {
+    private DubboSslContextBuilder getBuilder() {
         DubboSslContextBuilder builder = new DubboSslContextBuilder();
         builder.setPrivateKey(loadPrivateKeyInputStream());
         builder.setCertificate(loadCertificateInputStream());
@@ -285,15 +290,15 @@ public class DubboNettyChannelPooledFactoryTest {
         return builder;
     }
 
-    private InputStream loadPrivateKeyInputStream() throws IOException {
+    private InputStream loadPrivateKeyInputStream() {
         return new ByteArrayInputStream(privateKey.getBytes());
     }
 
-    private InputStream loadCertificateInputStream() throws IOException {
+    private InputStream loadCertificateInputStream() {
         return new ByteArrayInputStream(certificate.getBytes());
     }
 
-    private InputStream loadTrustCertificatesInputStream() throws IOException {
+    private InputStream loadTrustCertificatesInputStream() {
         return new ByteArrayInputStream(trustCertificates.getBytes());
     }
 
