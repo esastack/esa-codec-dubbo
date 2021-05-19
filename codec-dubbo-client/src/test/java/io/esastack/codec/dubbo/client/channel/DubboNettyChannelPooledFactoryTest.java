@@ -33,7 +33,6 @@ import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -64,7 +63,6 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
-    @Ignore
     public void create() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20880, 1000), null);
@@ -79,7 +77,6 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
-    @Ignore
     public void createRefused() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20000, 100), null);
@@ -94,7 +91,6 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
-    @Ignore
     public void connectSyncTest() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20880, 100), null);
@@ -122,7 +118,6 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
-    @Ignore
     public void handleConnectionComplete() {
         try {
             //un-success without ssl
@@ -199,7 +194,6 @@ public class DubboNettyChannelPooledFactoryTest {
     }
 
     @Test
-    @Ignore
     public void handleTimeoutTest() {
         final DubboNettyChannelPooledFactory factory =
                 new DubboNettyChannelPooledFactory(createBuilder(20000, 100), null);
