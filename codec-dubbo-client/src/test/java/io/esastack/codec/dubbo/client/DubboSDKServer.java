@@ -71,7 +71,8 @@ public class DubboSDKServer {
                                                 response),
                                         request.getBody().alloc());
                             } catch (SerializationException e) {
-                                e.printStackTrace();
+                                LOGGER.error("Failed to serialize response for reason {} and exception: {}",
+                                        e.getMessage(), e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
                             dubboResponseHolder.end(dubboResponse);
@@ -89,5 +90,4 @@ public class DubboSDKServer {
         dubboServer.start();
         return dubboServer;
     }
-
 }

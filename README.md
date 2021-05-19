@@ -1,45 +1,50 @@
 # ESA dubbo-lite
 
-背景概述
+## Overview
 
-针对Dubbo协议 二进制编码和解码。
-功能特性
+Binary encoding and decoding for Dubbo protocol.
 
-    完全兼容Dubbo协议
-    基于Netty完全重写，不依赖原生Dubbo
-    支持只解析元数据，不解析Body(适合代理场景）
-    支持Dubbo Server
-    支持Dubbo Client
-    多种序列化支持
+## Features
+- Fully compatible with Dubbo protocol
+- Completely rewritten based on Netty, does not rely on native Dubbo
+- Support only parsing metadata, not body (suitable for proxy scenarios)
+- Support Dubbo Server
+- Support Dubbo Client
+- Multiple serialization protocol support
 
-##  SDK使用说明
-#### 1、 引入Maven依赖
+##  SDK instructions
+#### 1、Introduce Maven dependency
 ```xml   
 <dependency>
 	<groupId>io.esastack</groupId>
 	<artifactId>codec-dubbo-client</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>${mvn.version}</version>
 </dependency>
 <dependency>
 	<groupId>io.esastack</groupId>
 	<artifactId>codec-dubbo-server</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>${mvn.version}</version>
 </dependency>
 ```
- #### 2、Dubbo Client SDK使用说明
+ #### 2、Dubbo Client SDK instructions
  ```java
 public class DubboSDKClient {
-    
-    public static void main(String[] args) throws Exception {
-        // 构建client
-        DubboClientBuilder clientConfig = new DubboClientBuilder()
-                .setHost("localhost")
-                .setPort(20880)
-                .setConnectTimeout(1000)
-                .setWriteTimeout(1000);
-        NettyDubboClient dubboNettyClient = new NettyDubboClient(clientConfig);
 
-        //构建request
+    public static void main(String[] args) throws Exception {
+        // build client
+        final Map<ChannelOption, Object> channelOptions = new HashMap<>();
+        channelOptions.put(ChannelOption.SO_KEEPALIVE, true);
+        channelOptions.put(ChannelOption.TCP_NODELAY, true);
+        channelOptions.put(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
+        final DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder = DubboClientBuilder.MultiplexPoolBuilder.newBuilder();
+        final DubboClientBuilder builder = new DubboClientBuilder()
+                .setMultiplexPoolBuilder(multiplexPoolBuilder)
+                .setChannelOptions(channelOptions)
+                .setHost("localhost")
+                .setPort(20880);
+        NettyDubboClient nettyDubboClient = new NettyDubboClient(builder);
+
+        // build request
         RpcInvocation rpcInvocation = new RpcInvocation();
         rpcInvocation.setMethodName("sayHello");
         rpcInvocation.setParameterTypes(new Class[]{String.class});
@@ -52,21 +57,20 @@ public class DubboSDKClient {
 
         DubboMessage request = ClientCodecHelper.toDubboMessage(rpcInvocation);
 
-        //发送请求并处理返回值
-        CompletableFuture<RpcResult> responseFuture = dubboNettyClient.sendRequest(request, String.class);
+        // Send the request and handle the return value
+        CompletableFuture<RpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
 
         responseFuture.whenComplete((r, t) -> {
             if (t != null || r.getException() != null || StringUtils.isNotEmpty(r.getErrorMessage())) {
-                // 异常处理
+                // handle exception
             }
-            // 没有异常，返回值为String，直接强转，其他返回值类型酌情处理，获取返回值以后，自行处理返回值
-            String result = (String) r.getValue();
+            // handle return value r.getValue();
         });
     }
 }
 ```
 
- #### 3、 Dubbo Server SDK使用说明
+ #### 3、 Dubbo Server SDK instructions
 
 
 ```java
@@ -91,7 +95,7 @@ public class DubboSDKServer {
                         try {
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
-                            //TODO 返回错误
+                            LOGGER.error("Failed to convert request to rpc invocation for {}", e);
                             dubboResponseHolder.end(null);
                             return;
                         }
@@ -102,7 +106,7 @@ public class DubboSDKServer {
                                     ", response from provider. seriType:" +
                                     invocation.getSeriType();
 
-                            DubboMessage dubboResponse;
+                            DubboMessage dubboResponse = null;
                             try {
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
                                         RpcResult.success(
@@ -111,7 +115,7 @@ public class DubboSDKServer {
                                                 response),
                                         request.getBody().alloc());
                             } catch (SerializationException e) {
-                                e.printStackTrace();
+                                LOGGER.error("Failed to serialize response for {}", e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
                             dubboResponseHolder.end(dubboResponse);
@@ -122,21 +126,9 @@ public class DubboSDKServer {
                     public void shutdown() {
 
                     }
-                })
-                .build();
+                }).build();
 
         dubboServer.start();
     }
 }
 ```
-
-
- #### 4、 序列化支持
- 
-    hessian2	
-    fastjson
-    json	
-    kryo	
-    fst	
-    protobuf
-    protostuff
