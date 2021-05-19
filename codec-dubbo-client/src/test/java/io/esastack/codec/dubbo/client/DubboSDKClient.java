@@ -19,7 +19,8 @@ public class DubboSDKClient {
         channelOptions.put(ChannelOption.SO_KEEPALIVE, true);
         channelOptions.put(ChannelOption.TCP_NODELAY, true);
         channelOptions.put(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-        final DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder = DubboClientBuilder.MultiplexPoolBuilder.newBuilder();
+        final DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder =
+                DubboClientBuilder.MultiplexPoolBuilder.newBuilder();
         final DubboClientBuilder builder = new DubboClientBuilder()
                 .setMultiplexPoolBuilder(multiplexPoolBuilder)
                 .setChannelOptions(channelOptions)
