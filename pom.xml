@@ -22,6 +22,85 @@
     <artifactId>codec-dubbo</artifactId>
     <packaging>pom</packaging>
     <version>0.1.0-SNAPSHOT</version>
+
+    <name>codec-dubbo</name>
+
+    <description>
+        codec-dubbo is a binary codec framework for dubbo protocol
+    </description>
+    <url>https://github.com/esastack</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/esastack/codec-dubbo</url>
+        <connection>scm:git:git://github.com/esastack/codec-dubbo.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/esastack/codec-dubbo.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>The ESA Stack Project Contributors</name>
+            <email>esa.stack@oppo.com</email>
+        </developer>
+    </developers>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>export-javadoc</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <configuration>
+                            <doclint>all,-missing</doclint>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <modules>
         <module>codec-dubbo-client</module>
         <module>codec-dubbo-server</module>
@@ -30,10 +109,14 @@
         <module>codec-commons-pool</module>
         <module>codec-serialization</module>
     </modules>
-    <name>codec-dubbo</name>
+
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java_source_version>1.8</java_source_version>
+        <java_target_version>1.8</java_target_version>
+        <encoding>UTF-8</encoding>
+        <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
         <netty.version>4.1.52.Final</netty.version>
         <netty-tcnative.version>2.0.34.Final</netty-tcnative.version>
         <esa.commons.vesion>0.1.0</esa.commons.vesion>
@@ -115,8 +198,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java_source_version}</source>
+                    <target>${java_target_version}</target>
+                    <encoding>${encoding}</encoding>
                 </configuration>
             </plugin>
 
@@ -177,6 +261,33 @@
                         <version>${esa.commons.vesion}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.6</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-init</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/dubbo/lite/test/**</exclude>
+                                <exclude>org/apache/dubbo/demo/**</exclude>
+                                <exclude>unix/domain/socket/demo/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
