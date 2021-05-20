@@ -1,29 +1,31 @@
-# ESA dubbo-lite
+# Codec-dubbo
+![Build](https://github.com/esastack/codec-dubbo/workflows/Build/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/esastack/codec-dubbo/branch/main/graph/badge.svg?token=CCQBCBQJP6)](https://codecov.io/gh/esastack/codec-dubbo)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/)
+[![GitHub license](https://img.shields.io/github/license/esastack/codec-dubbo)](https://github.com/esastack/codec-dubbo/blob/main/LICENSE)
 
-## Overview
-
-Binary encoding and decoding for Dubbo protocol.
+Codec-dubbo is a binary codec framework for dubbo protocol
 
 ## Features
 - Fully compatible with Dubbo protocol
 - Completely rewritten based on Netty, does not rely on native Dubbo
-- Support only parsing metadata, not body (suitable for proxy scenarios)
+- Support only parsing metadata but not body (suitable for proxy scenarios)
 - Support Dubbo Server
 - Support Dubbo Client
-- Multiple serialization protocol support
+- Multiple serialization protocols support
 
 ##  SDK instructions
-#### 1、Introduce Maven dependency
+#### 1、Introduce Maven dependencies
 ```xml   
 <dependency>
-	<groupId>io.esastack</groupId>
-	<artifactId>codec-dubbo-client</artifactId>
-	<version>${mvn.version}</version>
+    <groupId>io.esastack</groupId>
+    <artifactId>codec-dubbo-client</artifactId>
+    <version>${mvn.version}</version>
 </dependency>
 <dependency>
-	<groupId>io.esastack</groupId>
-	<artifactId>codec-dubbo-server</artifactId>
-	<version>${mvn.version}</version>
+    <groupId>io.esastack</groupId>
+    <artifactId>codec-dubbo-server</artifactId>
+    <version>${mvn.version}</version>
 </dependency>
 ```
  #### 2、Dubbo Client SDK instructions
@@ -86,13 +88,15 @@ public class DubboSDKServer {
                     .rejectPolicy((r, executor) -> LOGGER.error("rejectedExecution ")).build();
 
     public static void main(String[] args) {
+        // build server
         NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
                 .setPort(20880)
-                .setBizHandler(new DubboServerBizHandler() {
+                .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
                         final RpcInvocation invocation;
                         try {
+                            // parse request
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
                             LOGGER.error("Failed to convert request to rpc invocation for {}", e);
@@ -108,6 +112,7 @@ public class DubboSDKServer {
 
                             DubboMessage dubboResponse = null;
                             try {
+                                // build response
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
                                         RpcResult.success(
                                                 invocation.getRequestId(),
@@ -118,6 +123,7 @@ public class DubboSDKServer {
                                 LOGGER.error("Failed to serialize response for {}", e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
+                            // send response
                             dubboResponseHolder.end(dubboResponse);
                         });
                     }
