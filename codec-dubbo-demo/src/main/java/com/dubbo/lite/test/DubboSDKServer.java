@@ -23,6 +23,7 @@ import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
 import io.esastack.codec.dubbo.core.exception.SerializationException;
+import io.esastack.codec.dubbo.server.DubboServerBuilder;
 import io.esastack.codec.dubbo.server.NettyDubboServer;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.esastack.codec.dubbo.server.handler.DubboServerBizHandler;
@@ -43,16 +44,18 @@ public class DubboSDKServer {
                     .rejectPolicy((r, executor) -> LOGGER.error("rejectedExecution ")).build();
 
     public static void main(String[] args) {
-        NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
+        // build server
+        DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
                 .setPort(20880)
-                .setBizHandler(new DubboServerBizHandler() {
+                .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
                         final RpcInvocation invocation;
                         try {
+                            // parse request
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
-                            //TODO 返回错误
+                            LOGGER.error("Failed to convert request to rpc invocation for {}", e);
                             dubboResponseHolder.end(null);
                             return;
                         }
@@ -65,6 +68,7 @@ public class DubboSDKServer {
 
                             DubboMessage dubboResponse = null;
                             try {
+                                // build response
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
                                         RpcResult.success(
                                                 invocation.getRequestId(),
@@ -72,22 +76,22 @@ public class DubboSDKServer {
                                                 response),
                                         request.getBody().alloc());
                             } catch (SerializationException e) {
-                                e.printStackTrace();
+                                LOGGER.error("Failed to serialize response for {}", e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
+                            // send response
                             dubboResponseHolder.end(dubboResponse);
                         });
-
                     }
 
                     @Override
                     public void shutdown() {
 
                     }
-                })
-                .build();
+                });
+        NettyDubboServer nettyDubboServer = new NettyDubboServer(dubboServerBuilder);
 
-        dubboServer.start();
+        // start server
+        nettyDubboServer.start();
     }
-
 }
