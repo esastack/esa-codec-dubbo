@@ -15,6 +15,8 @@
  */
 package io.esastack.codec.dubbo.core;
 
+import esa.commons.logging.Logger;
+import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
@@ -30,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class CodecHelperTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(CodecHelperTest.class);
 
     @Test
     public void testToDubboMessage() throws Exception {
@@ -114,6 +118,11 @@ public class CodecHelperTest {
     public void toInvocation() throws Exception {
         RpcInvocation rpcInvocation = getRpcInvocation();
         DubboMessage requestMessage = ClientCodecHelper.toDubboMessage(rpcInvocation);
+
+        logger.info("seriType is {}\nrequestId is {}\ninterfaceName is {}\n" +
+                        "methodName is {}\nversion is {}\nparameterType is {}\nargument is {}",
+                rpcInvocation.getSeriType(), rpcInvocation.getRequestId(), rpcInvocation.getInterfaceName(),
+                rpcInvocation.getMethodName(), rpcInvocation.getParameterTypes()[0], rpcInvocation.getArguments()[0]);
 
         RpcInvocation invocation = ServerCodecHelper.toRpcInvocation(requestMessage);
         Assert.assertEquals(rpcInvocation.getSeriType(), invocation.getSeriType());
