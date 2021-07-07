@@ -16,6 +16,8 @@
 package io.esastack.codec.dubbo.core.codec.helper;
 
 import esa.commons.io.IOUtils;
+import esa.commons.logging.Logger;
+import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
@@ -38,6 +40,8 @@ import java.util.Map;
  * 针对客户端收到DubboMessage包进行解析工具类
  */
 public class ClientCodecHelper {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientCodecHelper.class);
 
     public static DubboMessage toDubboMessage(final RpcInvocation invocation) throws Exception {
         return toDubboMessage(invocation, UnpooledByteBufAllocator.DEFAULT);
@@ -71,6 +75,10 @@ public class ClientCodecHelper {
             out.writeUTF(invocation.getVersion());
             out.writeUTF(invocation.getMethodName());
             out.writeUTF(ReflectUtils.getDesc(invocation.getParameterTypes()));
+            if (invocation.getParameterTypes().length == 1) {
+                logger.info("parameterType is {}", invocation.getParameterTypes()[0]);
+                logger.info("parameterType desc is ", ReflectUtils.getDesc(invocation.getParameterTypes()));
+            }
 
             if (invocation.getArguments() != null) {
                 for (int i = 0; i < invocation.getArguments().length; i++) {
