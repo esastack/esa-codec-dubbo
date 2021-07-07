@@ -150,6 +150,8 @@ public final class ReflectUtils {
                 case "short":
                     ret.append(JVM_SHORT);
                     break;
+                default:
+                    break;
             }
         } else {
             ret.append('L');
