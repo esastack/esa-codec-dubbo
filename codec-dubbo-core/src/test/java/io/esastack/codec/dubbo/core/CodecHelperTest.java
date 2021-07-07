@@ -114,7 +114,6 @@ public class CodecHelperTest {
     public void toInvocation() throws Exception {
         RpcInvocation rpcInvocation = getRpcInvocation();
         DubboMessage requestMessage = ClientCodecHelper.toDubboMessage(rpcInvocation);
-
         RpcInvocation invocation = ServerCodecHelper.toRpcInvocation(requestMessage);
         Assert.assertEquals(rpcInvocation.getSeriType(), invocation.getSeriType());
         Assert.assertEquals(rpcInvocation.getRequestId(), invocation.getRequestId());

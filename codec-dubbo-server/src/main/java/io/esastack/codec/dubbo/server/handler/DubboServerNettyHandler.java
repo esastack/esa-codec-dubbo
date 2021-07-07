@@ -18,6 +18,7 @@ package io.esastack.codec.dubbo.server.handler;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
+import io.esastack.codec.dubbo.core.exception.UnknownProtocolException;
 import io.esastack.codec.dubbo.core.utils.SslUtils;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -48,7 +49,12 @@ public class DubboServerNettyHandler extends SimpleChannelInboundHandler<DubboMe
         if (socketAddress == null) {
             LOGGER.error("Exception caught, remote address is null: ", t);
         } else {
-            LOGGER.error("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
+            if (t instanceof UnknownProtocolException) {
+                // Distinguish protocol analysis exception
+                LOGGER.warn("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
+            } else {
+                LOGGER.error("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
+            }
         }
         ctx.close();
     }
