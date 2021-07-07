@@ -23,7 +23,6 @@ import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.serialization.api.SerializeConstants;
 import io.netty.buffer.ByteBuf;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -112,7 +111,6 @@ public class CodecHelperTest {
     }
 
     @Test
-    @Ignore
     public void toInvocation() throws Exception {
         RpcInvocation rpcInvocation = getRpcInvocation();
         DubboMessage requestMessage = ClientCodecHelper.toDubboMessage(rpcInvocation);
