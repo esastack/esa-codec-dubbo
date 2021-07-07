@@ -16,8 +16,6 @@
 package io.esastack.codec.dubbo.core.codec.helper;
 
 import esa.commons.io.IOUtils;
-import esa.commons.logging.Logger;
-import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
@@ -38,8 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ServerCodecHelper {
-
-    private static final Logger logger = LoggerFactory.getLogger(ServerCodecHelper.class);
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
@@ -177,9 +173,6 @@ public class ServerCodecHelper {
                     parameterTypes = ReflectUtils.desc2classArray(parameterTypeDesc);
                 }
                 args = new Object[parameterTypes.length];
-                if (args.length == 1) {
-                    logger.info("parameter type is {}", args[0]);
-                }
                 for (int i = 0; i < args.length; i++) {
                     args[i] = in.readObject(parameterTypes[i]);
                 }
