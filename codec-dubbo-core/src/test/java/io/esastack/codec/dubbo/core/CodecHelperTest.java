@@ -122,7 +122,8 @@ public class CodecHelperTest {
         logger.info("seriType is {}\nrequestId is {}\ninterfaceName is {}\n" +
                         "methodName is {}\nversion is {}\nparameterType is {}\nargument is {}",
                 rpcInvocation.getSeriType(), rpcInvocation.getRequestId(), rpcInvocation.getInterfaceName(),
-                rpcInvocation.getMethodName(), rpcInvocation.getParameterTypes()[0], rpcInvocation.getArguments()[0]);
+                rpcInvocation.getMethodName(), rpcInvocation.getVersion(),
+                rpcInvocation.getParameterTypes()[0], rpcInvocation.getArguments()[0]);
 
         RpcInvocation invocation = ServerCodecHelper.toRpcInvocation(requestMessage);
         Assert.assertEquals(rpcInvocation.getSeriType(), invocation.getSeriType());

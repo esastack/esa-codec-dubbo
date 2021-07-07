@@ -77,7 +77,7 @@ public class ClientCodecHelper {
             out.writeUTF(ReflectUtils.getDesc(invocation.getParameterTypes()));
             if (invocation.getParameterTypes().length == 1) {
                 logger.info("parameterType is {}", invocation.getParameterTypes()[0]);
-                logger.info("parameterType desc is ", ReflectUtils.getDesc(invocation.getParameterTypes()));
+                logger.info("parameterType desc is {}", ReflectUtils.getDesc(invocation.getParameterTypes()));
             }
 
             if (invocation.getArguments() != null) {
