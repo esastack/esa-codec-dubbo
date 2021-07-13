@@ -105,7 +105,6 @@ public final class ReflectUtils {
      */
     public static String getDesc(Class<?> c) {
 
-        boolean isArray = false;
         Class<?> originClass = c;
 
         if (CLASS_DESC_CACHE.containsKey(c)) {
@@ -159,11 +158,7 @@ public final class ReflectUtils {
             ret.append(';');
         }
         String desc = ret.toString();
-        if (isArray) {
-            CLASS_DESC_CACHE.putIfAbsent(originClass, desc);
-        } else {
-            CLASS_DESC_CACHE.putIfAbsent(c, desc);
-        }
+        CLASS_DESC_CACHE.putIfAbsent(originClass, desc);
         return desc;
     }
 
