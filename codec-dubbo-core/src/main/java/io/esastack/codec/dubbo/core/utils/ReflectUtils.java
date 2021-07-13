@@ -114,6 +114,7 @@ public final class ReflectUtils {
         StringBuilder ret = new StringBuilder();
 
         while (c.isArray()) {
+            isArray = true;
             ret.append('[');
             c = c.getComponentType();
         }
