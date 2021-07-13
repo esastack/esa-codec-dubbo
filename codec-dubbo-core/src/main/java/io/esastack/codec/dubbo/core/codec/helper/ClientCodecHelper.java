@@ -136,6 +136,7 @@ public class ClientCodecHelper {
             if (DubboConstants.RESPONSE_STATUS.OK == response.getHeader().getStatus()) {
                 deserialize(rpcResult, in, returnType, genericReturnType);
             } else {
+                // Compatible with dubbo, only exception information, no exception stack information
                 rpcResult.setStatus(DubboConstants.RESPONSE_STATUS.SERVER_ERROR);
                 rpcResult.setErrorMessage(in.readUTF());
             }
@@ -145,6 +146,7 @@ public class ClientCodecHelper {
         } catch (Throwable t) {
             rpcResult.setStatus(DubboConstants.RESPONSE_STATUS.CLIENT_ERROR);
             rpcResult.setErrorMessage(t.toString());
+            rpcResult.setException(t);
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(byteBufInputStream);

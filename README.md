@@ -89,7 +89,7 @@ public class DubboSDKServer {
 
     public static void main(String[] args) {
         // build server
-        NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
+        DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
                 .setPort(20880)
                 .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
@@ -132,9 +132,11 @@ public class DubboSDKServer {
                     public void shutdown() {
 
                     }
-                }).build();
+                });
+        NettyDubboServer nettyDubboServer = new NettyDubboServer(dubboServerBuilder);
 
-        dubboServer.start();
+        // start server
+        nettyDubboServer.start();
     }
 }
 ```

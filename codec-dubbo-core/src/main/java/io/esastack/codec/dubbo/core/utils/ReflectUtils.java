@@ -104,6 +104,9 @@ public final class ReflectUtils {
      * @return desc.
      */
     public static String getDesc(Class<?> c) {
+
+        Class<?> originClass = c;
+
         if (CLASS_DESC_CACHE.containsKey(c)) {
             return CLASS_DESC_CACHE.get(c);
         }
@@ -117,24 +120,36 @@ public final class ReflectUtils {
 
         if (c.isPrimitive()) {
             String t = c.getName();
-            if ("void".equals(t)) {
-                ret.append(JVM_VOID);
-            } else if ("boolean".equals(t)) {
-                ret.append(JVM_BOOLEAN);
-            } else if ("byte".equals(t)) {
-                ret.append(JVM_BYTE);
-            } else if ("char".equals(t)) {
-                ret.append(JVM_CHAR);
-            } else if ("double".equals(t)) {
-                ret.append(JVM_DOUBLE);
-            } else if ("float".equals(t)) {
-                ret.append(JVM_FLOAT);
-            } else if ("int".equals(t)) {
-                ret.append(JVM_INT);
-            } else if ("long".equals(t)) {
-                ret.append(JVM_LONG);
-            } else if ("short".equals(t)) {
-                ret.append(JVM_SHORT);
+            switch (t) {
+                case "void":
+                    ret.append(JVM_VOID);
+                    break;
+                case "boolean":
+                    ret.append(JVM_BOOLEAN);
+                    break;
+                case "byte":
+                    ret.append(JVM_BYTE);
+                    break;
+                case "char":
+                    ret.append(JVM_CHAR);
+                    break;
+                case "double":
+                    ret.append(JVM_DOUBLE);
+                    break;
+                case "float":
+                    ret.append(JVM_FLOAT);
+                    break;
+                case "int":
+                    ret.append(JVM_INT);
+                    break;
+                case "long":
+                    ret.append(JVM_LONG);
+                    break;
+                case "short":
+                    ret.append(JVM_SHORT);
+                    break;
+                default:
+                    break;
             }
         } else {
             ret.append('L');
@@ -142,7 +157,7 @@ public final class ReflectUtils {
             ret.append(';');
         }
         String desc = ret.toString();
-        CLASS_DESC_CACHE.putIfAbsent(c, desc);
+        CLASS_DESC_CACHE.putIfAbsent(originClass, desc);
         return desc;
     }
 
