@@ -17,6 +17,7 @@ package io.esastack.codec.dubbo.client;
 
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.CompletableFuture;
@@ -41,6 +42,11 @@ public interface DubboClient {
                                              final Class<?> returnType,
                                              final Type genericReturnType,
                                              final long timeout);
+
+    CompletableFuture<DubboMessageWrapper> sendRequestWaitInBiz(final DubboMessage request,
+                                                                final Class<?> returnType,
+                                                                final Type genericReturnType,
+                                                                final long timeout);
 
     boolean isActive();
 

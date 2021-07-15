@@ -18,25 +18,21 @@ package io.esastack.codec.dubbo.client.handler;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.client.DubboResponseCallback;
+import io.esastack.codec.dubbo.client.DubboResponseInBizCallback;
 import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
 import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 import io.esastack.codec.dubbo.core.utils.NettyUtils;
-import io.esastack.codec.dubbo.core.utils.SslUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.timeout.IdleStateEvent;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.security.cert.Certificate;
 import java.util.Map;
 
 /**
@@ -119,6 +115,17 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         }
 
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
+
+        // 业务线程处理反序列化
+        if (callback instanceof DubboResponseInBizCallback) {
+            // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
+            response.retain();
+            DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
+            messageWrapper.addAllAttachment(ttfbAttachments);
+            ((DubboResponseInBizCallback) callback).onBizResponse(messageWrapper);
+            return;
+        }
+
         SerializeHandler.get().deserialize(response, callback, ttfbAttachments);
     }
 

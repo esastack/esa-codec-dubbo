@@ -63,7 +63,7 @@ public class TTFBLengthFieldBasedFrameDecoder extends LengthFieldBasedFrameDecod
             if (frame.readableBytes() >= DubboConstants.MAGIC_LENGTH && isDubboMagic(frame)) {
                 protoValidated = true;
             } else {
-                logger.error("Received message which is not dubbo protocol, check the remote protocol please!");
+                logger.info("Received message which is not dubbo protocol, check the remote protocol please!");
                 final InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
                 final InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
                 final String reqMsg = remoteAddress.getHostString() + ":" + remoteAddress.getPort() + " --> " +

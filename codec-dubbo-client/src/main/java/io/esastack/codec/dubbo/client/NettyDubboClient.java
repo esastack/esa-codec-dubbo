@@ -28,6 +28,7 @@ import io.esastack.codec.dubbo.client.exception.ConnectFailedException;
 import io.esastack.codec.dubbo.client.exception.RequestTimeoutException;
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.ssl.SslContext;
@@ -123,6 +124,57 @@ public class NettyDubboClient implements DubboClient {
                 rpcResult.setAttachment(
                         DubboConstants.TRACE.TIME_OF_REQ_FLUSH_KEY, String.valueOf(invocationFlushTime));
                 cf.complete(rpcResult);
+            }
+
+            @Override
+            public Class<?> getReturnType() {
+                return returnType;
+            }
+
+            @Override
+            public Type getGenericReturnType() {
+                return genericReturnType;
+            }
+        }, timeout);
+
+        return cf;
+    }
+
+    @Override
+    public CompletableFuture<DubboMessageWrapper> sendRequestWaitInBiz(DubboMessage request,
+                                                                       Class<?> returnType,
+                                                                       Type genericReturnType,
+                                                                       long timeout) {
+        final CompletableFuture<DubboMessageWrapper> cf = new CompletableFuture<>();
+        sendRequest(request, new DubboResponseInBizCallback() {
+
+            private volatile long invocationFlushTime;
+
+            @Override
+            public void onBizResponse(DubboMessageWrapper messageWrapper) {
+                messageWrapper.addAttachment(
+                        DubboConstants.TRACE.TIME_OF_REQ_FLUSH_KEY, String.valueOf(invocationFlushTime));
+                cf.complete(messageWrapper);
+            }
+
+            @Override
+            public void onResponse(RpcResult rpcResult) {
+                // log or exception
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                cf.completeExceptionally(e);
+            }
+
+            @Override
+            public void onGotConnection(boolean b, String errMsg) {
+
+            }
+
+            @Override
+            public void onWriteToNetwork(boolean isSuccess, String errMsg) {
+                this.invocationFlushTime = System.currentTimeMillis();
             }
 
             @Override
