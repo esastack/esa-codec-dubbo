@@ -17,10 +17,8 @@ package io.esastack.codec.dubbo.server.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.utils.DubboConstants;
-import io.esastack.codec.dubbo.core.utils.NettyUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,19 +35,9 @@ public abstract class BaseServerBizHandlerAdapter implements DubboServerBizHandl
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("received heart beat request, " + channelInfo);
             }
-            DubboMessage serverResponse = new DubboMessage();
-            DubboHeader header = new DubboHeader();
-            header.setSeriType(request.getHeader().getSeriType())
-                    .setRequestId(request.getHeader().getRequestId())
-                    .setHeartbeat(true)
-                    .setStatus(DubboConstants.RESPONSE_STATUS.OK);
-            serverResponse.setHeader(header);
-            try {
-                serverResponse.setBody(NettyUtils.nullValue(request.getHeader().getSeriType()));
-            } catch (Exception e) {
-                LOGGER.error("received bad heart request NettyUtils nullValue error, " + channelInfo, e);
-                return;
-            }
+            DubboMessage serverResponse = new DubboMessage()
+                    .setHeader(request.getHeader().setStatus(DubboConstants.RESPONSE_STATUS.OK))
+                    .setBody(new byte[0]);
             responseHolder.end(serverResponse);
             return;
         }

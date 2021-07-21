@@ -37,12 +37,7 @@ public class DubboRequestMetaDataHelperTest {
         message.setHeader(header);
         message.setBody(null);
 
-        assertEquals(0, message.refCnt());
-        assertTrue(message.release());
-        assertTrue(message.release(1));
-        assertEquals(message, message.touch());
-
-        message.setBody(Unpooled.EMPTY_BUFFER);
+        message.setBody(new byte[16]);
 
         assertNull(DubboRequestMetaDataHelper.readRequestMetaData(message));
 
@@ -61,16 +56,6 @@ public class DubboRequestMetaDataHelperTest {
         DubboRequestMetaData dubboRequestMetaData = DubboRequestMetaDataHelper.readRequestMetaData(message);
         assert dubboRequestMetaData != null;
         assertEquals(message.getHeader().getSeriType(), dubboRequestMetaData.getSeriType());
-
-        // 测试dubboMessage
-        assertEquals(message, message.touch());
-        assertEquals(message, message.retain());
-        assertEquals(message, message.retain(1));
-        assertEquals(3, message.refCnt());
-        assertFalse(message.release(1));
-        assertEquals(2, message.refCnt());
-        assertFalse(message.release());
-        assertEquals(1, message.refCnt());
     }
 
 }

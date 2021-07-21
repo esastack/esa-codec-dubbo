@@ -19,24 +19,19 @@ import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.client.DubboResponseCallback;
 import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
-import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
+import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.utils.NettyUtils;
-import io.esastack.codec.dubbo.core.utils.SslUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.timeout.IdleStateEvent;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.security.cert.Certificate;
 import java.util.Map;
 
 /**
@@ -119,7 +114,8 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         }
 
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
-        SerializeHandler.get().deserialize(response, callback, ttfbAttachments);
+        final RpcResult rpcResult = ClientCodecHelper.toRpcResult(response, ttfbAttachments);
+        callback.onResponse(rpcResult);
     }
 
     @Override
@@ -136,7 +132,6 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
             DubboHeader header = new DubboHeader();
             header.setSeriType((byte) 2).setHeartbeat(true).setRequest(true);
             heartbeat.setHeader(header);
-            heartbeat.setBody(NettyUtils.nullValue((byte) 2));
             ctx.writeAndFlush(heartbeat).addListener(future -> {
                 if (future.isSuccess()) {
                     if (LOGGER.isDebugEnabled()) {

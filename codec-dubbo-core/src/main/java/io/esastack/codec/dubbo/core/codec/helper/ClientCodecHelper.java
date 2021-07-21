@@ -27,9 +27,9 @@ import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.api.SerializeFactory;
-import io.netty.buffer.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -40,11 +40,6 @@ import java.util.Map;
 public class ClientCodecHelper {
 
     public static DubboMessage toDubboMessage(final RpcInvocation invocation) throws Exception {
-        return toDubboMessage(invocation, UnpooledByteBufAllocator.DEFAULT);
-    }
-
-    public static DubboMessage toDubboMessage(final RpcInvocation invocation,
-                                              final ByteBufAllocator alloc) throws Exception {
         DubboMessage request = new DubboMessage();
 
         DubboHeader header = new DubboHeader()
@@ -55,7 +50,7 @@ public class ClientCodecHelper {
 
         request.setHeader(header);
 
-        ByteBufOutputStream byteBufOutputStream = null;
+        ByteArrayOutputStream byteArrayOutputStream = null;
         DataOutputStream out = null;
         try {
             Serialization serialization = SerializeFactory.getSerialization(invocation.getSeriType());
@@ -63,8 +58,8 @@ public class ClientCodecHelper {
                 throw new SerializationException("Unsupported serialization type:" + request.getHeader().getSeriType());
             }
 
-            byteBufOutputStream = new ByteBufOutputStream(alloc.buffer());
-            out = serialization.serialize(byteBufOutputStream);
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            out = serialization.serialize(byteArrayOutputStream);
 
             out.writeUTF(DubboConstants.DUBBO_VERSION);
             out.writeUTF(invocation.getInterfaceName());
@@ -82,35 +77,35 @@ public class ClientCodecHelper {
             out.writeMap(invocation.getAttachments());
             out.flush();
 
-            request.setBody(byteBufOutputStream.buffer());
+            request.setBody(byteArrayOutputStream.toByteArray());
         } finally {
-            IOUtils.closeQuietly(byteBufOutputStream);
             IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(byteArrayOutputStream);
         }
 
         return request;
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType) {
-        return toRpcResult(response, returnType, returnType, null);
+    public static RpcResult toRpcResult(final DubboHeader header,
+                                        final byte[] body) {
+        return toRpcResult(header, body, null);
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType) {
-        return toRpcResult(response, returnType, genericReturnType, null);
-    }
-
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
+    public static RpcResult toRpcResult(final DubboHeader header,
+                                        final byte[] body,
                                         final Map<String, String> attachments) {
-        return toRpcResult(response, returnType, returnType, attachments);
+        if (header == null || body == null) {
+            return null;
+        }
+        DubboMessage dubboMessage = new DubboMessage().setHeader(header).setBody(body);
+        return toRpcResult(dubboMessage, attachments);
+    }
+
+    public static RpcResult toRpcResult(final DubboMessage response) {
+        return toRpcResult(response, null);
     }
 
     public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType,
                                         final Map<String, String> attachments) {
         if (response == null || response.getHeader() == null) {
             return null;
@@ -120,70 +115,34 @@ public class ClientCodecHelper {
         rpcResult.setSeriType(response.getHeader().getSeriType());
         rpcResult.setRequestId(response.getHeader().getRequestId());
         rpcResult.setStatus(response.getHeader().getStatus());
-        ByteBuf byteBuf = response.getBody();
-        ByteBufInputStream byteBufInputStream = null;
-        DataInputStream in = null;
-        try {
-            Serialization serialization = SerializeFactory.getSerialization(response.getHeader().getSeriType());
-            if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" +
-                        response.getHeader().getSeriType());
-            }
-
-            byteBufInputStream = new ByteBufInputStream(byteBuf);
-            in = serialization.deserialize(byteBufInputStream);
-
-            if (DubboConstants.RESPONSE_STATUS.OK == response.getHeader().getStatus()) {
-                deserialize(rpcResult, in, returnType, genericReturnType);
-            } else {
-                // Compatible with dubbo, only exception information, no exception stack information
-                rpcResult.setStatus(DubboConstants.RESPONSE_STATUS.SERVER_ERROR);
-                rpcResult.setErrorMessage(in.readUTF());
-            }
-            if (attachments != null && !attachments.isEmpty()) {
-                rpcResult.getAttachments().putAll(attachments);
-            }
-        } catch (Throwable t) {
-            rpcResult.setStatus(DubboConstants.RESPONSE_STATUS.CLIENT_ERROR);
-            rpcResult.setErrorMessage(t.toString());
-            rpcResult.setException(t);
-        } finally {
-            IOUtils.closeQuietly(in);
-            IOUtils.closeQuietly(byteBufInputStream);
+        rpcResult.setValue(response.getBody());
+        if (attachments != null && !attachments.isEmpty()) {
+            rpcResult.getAttachments().putAll(attachments);
         }
         return rpcResult;
     }
 
-    public static RpcResult toRpcResult(final DubboHeader header,
-                                        final byte[] body,
-                                        final Class<?> returnType) {
-        return toRpcResult(header, body, returnType, returnType);
-    }
-
-    public static RpcResult toRpcResult(final DubboHeader header,
-                                        final byte[] body,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType) {
-        if (header == null || body == null) {
-            return null;
+    public static void deserializeBody(final RpcResult rpcResult,
+                                       final byte[] body,
+                                       final Class<?> returnType,
+                                       final Type genericReturnType) {
+        if (body == null) {
+            return;
         }
-
-        RpcResult rpcResult = new RpcResult();
-        rpcResult.setSeriType(header.getSeriType());
-        rpcResult.setRequestId(header.getRequestId());
-        rpcResult.setStatus(header.getStatus());
+        final long startAt = System.currentTimeMillis();
+        rpcResult.setAttachment(DubboConstants.TRACE.TIME_OF_RSP_DESERIALIZE_BEGIN_KEY, startAt + "");
         ByteArrayInputStream inputStream = null;
         DataInputStream in = null;
         try {
-            Serialization serialization = SerializeFactory.getSerialization(header.getSeriType());
+            Serialization serialization = SerializeFactory.getSerialization(rpcResult.getSeriType());
             if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" + header.getSeriType());
+                throw new SerializationException("unsupported serialization type:" + rpcResult.getSeriType());
             }
 
             inputStream = new ByteArrayInputStream(body);
             in = serialization.deserialize(inputStream);
 
-            if (DubboConstants.RESPONSE_STATUS.OK == header.getStatus()) {
+            if (DubboConstants.RESPONSE_STATUS.OK == rpcResult.getStatus()) {
                 deserialize(rpcResult, in, returnType, genericReturnType);
             } else {
                 rpcResult.setErrorMessage(in.readUTF());
@@ -195,7 +154,8 @@ public class ClientCodecHelper {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(inputStream);
         }
-        return rpcResult;
+        rpcResult.setAttachment(DubboConstants.TRACE.TIME_OF_RSP_DESERIALIZE_COST_KEY,
+                String.valueOf(System.currentTimeMillis() - startAt));
     }
 
     @SuppressWarnings("unchecked")

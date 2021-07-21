@@ -56,7 +56,7 @@ public class DubboServerNettyHandlerTest {
                     invocation.getSeriType(), str);
             DubboMessage dubboMessage = null;
             try {
-                dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult, request.getBody().alloc());
+                dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult);
             } catch (SerializationException e) {
                 e.printStackTrace();
                 dubboResponseHolder.getChannelHandlerContext().channel().close();
@@ -92,7 +92,7 @@ public class DubboServerNettyHandlerTest {
         DubboHeader header = new DubboHeader();
         header.setSeriType((byte) 2).setHeartbeat(true).setRequest(true);
         mocKHeartbeat.setHeader(header);
-        mocKHeartbeat.setBody(NettyUtils.nullValue((byte) 2));
+        //mocKHeartbeat.setBody(NettyUtils.nullValue((byte) 2));
         DubboServerNettyHandler dubboServerNettyHandler = new DubboServerNettyHandler(serverBizHandlerAdapter);
         EmbeddedChannel embeddedChannel = new EmbeddedChannel(dubboServerNettyHandler);
         IdleStateEvent idleStateEvent = IdleStateEvent.READER_IDLE_STATE_EVENT;

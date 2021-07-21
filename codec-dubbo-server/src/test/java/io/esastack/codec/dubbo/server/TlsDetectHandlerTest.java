@@ -71,7 +71,7 @@ public class TlsDetectHandlerTest {
                                 invocation.getSeriType(), str);
                         DubboMessage dubboMessage = null;
                         try {
-                            dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult, request.getBody().alloc());
+                            dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult);
                         } catch (SerializationException e) {
                             e.printStackTrace();
                             dubboResponseHolder.getChannelHandlerContext().channel().close();

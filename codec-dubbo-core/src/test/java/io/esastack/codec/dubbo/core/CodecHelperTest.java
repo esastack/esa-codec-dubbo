@@ -40,7 +40,7 @@ public class CodecHelperTest {
         Assert.assertEquals(rpcInvocation.getSeriType(), requestMessage.getHeader().getSeriType());
     }
 
-    @Test
+    /*@Test
     public void toRpcResultOk() throws SerializationException {
 
         Assert.assertNull(ClientCodecHelper.toRpcResult(null, ResultValue.class));
@@ -108,7 +108,7 @@ public class CodecHelperTest {
         RpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
                 dubboMessage.getHeader(), body, ResultValue.class);
         Assert.assertEquals(timeout.getMessage(), rpcResult2.getException().getMessage());
-    }
+    }*/
 
     @Test
     public void toInvocation() throws Exception {

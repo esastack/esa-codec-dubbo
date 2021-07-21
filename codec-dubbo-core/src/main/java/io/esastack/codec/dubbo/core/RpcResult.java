@@ -22,41 +22,42 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * RPC 调用结果
+ * Invoke result of RPC
  */
+@SuppressWarnings("UnusedReturnValue")
 public class RpcResult {
     /**
-     * 响应状态码
+     * Status code of response
      */
     private byte status = DubboConstants.RESPONSE_STATUS.OK;
 
     /**
-     * 序列化方式
+     * Type of serialization
      */
     private byte seriType;
 
     /**
-     * 请求ID
+     * Request ID
      */
     private long requestId = 0;
 
     /**
-     * RPC响应结果为对象
+     * RPC response result is an object
      */
     private Object value;
 
     /**
-     * RPC响应结果为异常
+     * RPC response result is an exception
      */
     private Throwable exception;
 
     /**
-     * 响应状态非OK时，以文本方式响应错误内容
+     * Respond to the error content in text while status code of response isn't OK
      */
     private String errorMessage;
 
     /**
-     * 附件
+     * attachment
      */
     private final Map<String, String> attachments = new HashMap<>(16);
 

@@ -27,11 +27,9 @@ import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.api.SerializeFactory;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.UnpooledByteBufAllocator;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,11 +40,6 @@ public class ServerCodecHelper {
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
 
     public static DubboMessage toDubboMessage(RpcResult rpcResult) throws SerializationException {
-        return toDubboMessage(rpcResult, UnpooledByteBufAllocator.DEFAULT);
-    }
-
-    public static DubboMessage toDubboMessage(RpcResult rpcResult,
-                                              ByteBufAllocator alloc) throws SerializationException {
         DubboMessage response = new DubboMessage();
 
         DubboHeader header = new DubboHeader()
@@ -64,11 +57,11 @@ public class ServerCodecHelper {
             throw new SerializationException("unsupported serialization type:" + header.getSeriType());
         }
 
-        ByteBufOutputStream byteBufOutputStream = null;
+        ByteArrayOutputStream byteArrayOutputStream = null;
         DataOutputStream out = null;
         try {
-            byteBufOutputStream = new ByteBufOutputStream(alloc.buffer());
-            out = serialization.serialize(byteBufOutputStream);
+            byteArrayOutputStream = new ByteArrayOutputStream();
+            out = serialization.serialize(byteArrayOutputStream);
             if (rpcResult.getException() == null) {
                 final Map<String, String> attachments = rpcResult.getAttachments();
                 final boolean emptyAttachments = attachments == null || attachments.isEmpty();
@@ -94,13 +87,13 @@ public class ServerCodecHelper {
                 out.writeThrowable(rpcResult.getException());
             }
             out.flush();
-            response.setBody(byteBufOutputStream.buffer());
+            response.setBody(byteArrayOutputStream.toByteArray());
         } catch (Throwable t) {
             rpcResult.setException(t);
-            return toDubboMessage(rpcResult, alloc);
+            return toDubboMessage(rpcResult);
         } finally {
             IOUtils.closeQuietly(out);
-            IOUtils.closeQuietly(byteBufOutputStream);
+            IOUtils.closeQuietly(byteArrayOutputStream);
         }
         return response;
     }
@@ -123,7 +116,7 @@ public class ServerCodecHelper {
         invocation.setSeriType(request.getHeader().getSeriType());
         invocation.setRequestId(request.getHeader().getRequestId());
 
-        ByteBufInputStream byteBufInputStream = null;
+        ByteArrayInputStream byteArrayInputStream = null;
         DataInputStream in = null;
         try {
             Serialization serialization = SerializeFactory.getSerialization(request.getHeader().getSeriType());
@@ -136,8 +129,8 @@ public class ServerCodecHelper {
                 throw new IllegalStateException();
             }
 
-            byteBufInputStream = new ByteBufInputStream(request.getBody());
-            in = serialization.deserialize(byteBufInputStream);
+            byteArrayInputStream = new ByteArrayInputStream(request.getBody());
+            in = serialization.deserialize(byteArrayInputStream);
 
             String dubboVersion = in.readUTF();
 
@@ -192,8 +185,8 @@ public class ServerCodecHelper {
             invocation.setAttachments(attachments);
         } finally {
             // request.release();  no need to release here
-            IOUtils.closeQuietly(byteBufInputStream);
             IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(byteArrayInputStream);
         }
 
         return invocation;

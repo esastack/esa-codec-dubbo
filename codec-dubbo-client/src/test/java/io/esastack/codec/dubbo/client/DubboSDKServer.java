@@ -68,8 +68,7 @@ public class DubboSDKServer {
                                         RpcResult.success(
                                                 invocation.getRequestId(),
                                                 invocation.getSeriType(),
-                                                response),
-                                        request.getBody().alloc());
+                                                response));
                             } catch (SerializationException e) {
                                 LOGGER.error("Failed to serialize response for reason {} and exception: {}",
                                         e.getMessage(), e);

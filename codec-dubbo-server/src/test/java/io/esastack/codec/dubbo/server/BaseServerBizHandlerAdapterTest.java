@@ -60,7 +60,7 @@ public class BaseServerBizHandlerAdapterTest {
         DubboHeader header = new DubboHeader();
         header.setSeriType((byte) 2).setHeartbeat(true).setRequest(true);
         mocKHeartbeat.setHeader(header);
-        mocKHeartbeat.setBody(NettyUtils.nullValue((byte) 2));
+        //mocKHeartbeat.setBody(NettyUtils.nullValue((byte) 2));
 
         BaseServerBizHandlerAdapter serverBizHandlerAdapter = new BaseServerBizHandlerAdapter() {
             @Override
@@ -77,7 +77,7 @@ public class BaseServerBizHandlerAdapterTest {
                         invocation.getSeriType(), str);
                 DubboMessage dubboMessage = null;
                 try {
-                    dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult, request.getBody().alloc());
+                    dubboMessage = ServerCodecHelper.toDubboMessage(rpcResult);
                 } catch (SerializationException e) {
                     e.printStackTrace();
                     dubboResponseHolder.getChannelHandlerContext().channel().close();

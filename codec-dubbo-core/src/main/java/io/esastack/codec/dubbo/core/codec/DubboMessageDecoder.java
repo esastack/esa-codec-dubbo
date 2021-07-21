@@ -58,8 +58,9 @@ public class DubboMessageDecoder extends MessageToMessageDecoder<ByteBuf> {
         //读取Body
         int len = frame.readableBytes() - DubboConstants.HEADER_LENGTH;
         if (len > 0) {
-            ByteBuf byteBuf = frame.slice(DubboConstants.HEADER_LENGTH, len).retain();
-            dubboMessage.setBody(byteBuf);
+            byte[] body = new byte[len];
+            frame.slice(DubboConstants.HEADER_LENGTH, len).readBytes(body);
+            dubboMessage.setBody(body);
         }
 
         //Dubbo协议收包完成事件时间 纳秒

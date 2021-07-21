@@ -150,7 +150,7 @@ public class NettyUtils {
      * extract ttfb key to attachments from channel attr see TTFBLengthFieldBasedFrameDecoder
      */
     public static Map<String, String> extractTtfbKey(final Channel channel) {
-        final Map<String, String> attachments = new HashMap<>();
+        final Map<String, String> attachments = new HashMap<>(4);
         //构建首字节收包事件产生时间,TTFBLengthFieldBasedFrameDecoder 用于调用链上报监控
         //Trace过滤器 ConsumerTraceFilter ProviderTraceFilter
         final Attribute<Long> decodeTtfbTime = channel.attr(DubboConstants.DECODE_TTFB_KEY);

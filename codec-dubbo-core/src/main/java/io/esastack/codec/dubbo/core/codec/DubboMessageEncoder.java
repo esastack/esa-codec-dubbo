@@ -19,11 +19,11 @@ import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import io.netty.util.ReferenceCountUtil;
+
+import static io.esastack.codec.dubbo.core.utils.DubboConstants.HEADER_LENGTH;
 
 /**
  * Dubbo protocol
@@ -39,34 +39,20 @@ import io.netty.util.ReferenceCountUtil;
  */
 public class DubboMessageEncoder extends ChannelOutboundHandlerAdapter {
 
-    private static final Boolean DUBBO_ENCODE_ZEROCOPY = Boolean.getBoolean("dubbo.encode.zerocopy");
-
     private static final Logger logger = LoggerFactory.getLogger(DubboMessageEncoder.class);
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         if (msg instanceof DubboMessage) {
             DubboMessage dubboMessage = (DubboMessage) msg;
-            ByteBuf buffer = ctx.alloc().directBuffer();
-            encodeHeader(buffer, dubboMessage.getHeader(), ctx);
+            int bodyLength = (dubboMessage.getBody() == null ? 0 : dubboMessage.getBody().length);
 
-            //设置Body大小
-            int bodyLength = (dubboMessage.getBody() == null ? 0 : dubboMessage.getBody().readableBytes());
-            buffer.writeInt(bodyLength);
+            ByteBuf buffer = ctx.alloc().directBuffer(HEADER_LENGTH + bodyLength);
 
-            if (DUBBO_ENCODE_ZEROCOPY) {
-                CompositeByteBuf compositeByteBuf = ctx.alloc().compositeBuffer();
-                compositeByteBuf.addComponent(true, buffer);
-                //写入body
-                if (bodyLength > 0) {
-                    compositeByteBuf.addComponent(true, dubboMessage.getBody());
-                }
-                ctx.writeAndFlush(compositeByteBuf, promise);
-            } else {
-                buffer.writeBytes(dubboMessage.getBody());
-                ctx.writeAndFlush(buffer, promise);
-                ReferenceCountUtil.release(dubboMessage);
-            }
+            encodeHeader(buffer, dubboMessage.getHeader(), bodyLength);
+            buffer.writeBytes(dubboMessage.getBody() == null ? new byte[0] : dubboMessage.getBody());
+
+            ctx.writeAndFlush(buffer, promise);
         } else {
             ctx.writeAndFlush(msg, promise);
         }
@@ -77,7 +63,7 @@ public class DubboMessageEncoder extends ChannelOutboundHandlerAdapter {
 
     }
 
-    private void encodeHeader(ByteBuf frame, DubboHeader header, ChannelHandlerContext ctx) {
+    private void encodeHeader(ByteBuf frame, DubboHeader header, int bodyLength) {
         //设置魔数，用于区分是否Dubbo协议
         frame.writeShort(DubboConstants.MAGIC);
 
@@ -106,5 +92,6 @@ public class DubboMessageEncoder extends ChannelOutboundHandlerAdapter {
 
         //设置请求ID
         frame.writeLong(header.getRequestId());
+        frame.writeInt(bodyLength);
     }
 }
