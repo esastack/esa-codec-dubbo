@@ -63,6 +63,7 @@ public class NettyDubboClientTest {
         final CompletableFuture<RpcResult> future = client.sendRequest(request, String.class, 1000);
         try {
             RpcResult rpcResult = future.get();
+            ClientCodecHelper.deserializeBody(rpcResult, (byte[]) rpcResult.getValue(), String.class, null);
             Assert.assertEquals(rpcResult.getValue(), "test");
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -193,7 +194,8 @@ public class NettyDubboClientTest {
         final DubboClientBuilder builder = new DubboClientBuilder()
                 .setMultiplexPoolBuilder(poolBuilder)
                 .setHost("127.0.0.1")
-                .setPort(port);
+                .setPort(port)
+                .setConnectTimeout(3000);
         return new NettyDubboClient(builder);
     }
 
