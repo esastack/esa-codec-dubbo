@@ -192,6 +192,7 @@ public class DubboNettyChannel {
         return closeFuture;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private Bootstrap newBootStrap() {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(GROUP);

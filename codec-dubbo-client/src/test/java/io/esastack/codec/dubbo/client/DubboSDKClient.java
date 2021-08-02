@@ -42,7 +42,7 @@ public class DubboSDKClient {
         DubboMessage request = ClientCodecHelper.toDubboMessage(rpcInvocation);
 
         // Send the request and handle the return value
-        CompletableFuture<RpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
+        CompletableFuture<RpcResult> responseFuture = nettyDubboClient.sendRequestAsync(request, String.class);
 
         responseFuture.whenComplete((r, t) -> {
             if (t != null || r.getException() != null || StringUtils.isNotEmpty(r.getErrorMessage())) {

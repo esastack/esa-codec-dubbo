@@ -17,8 +17,9 @@ package io.esastack.codec.dubbo.client.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import io.esastack.codec.dubbo.client.AsyncDubboResponseCallback;
 import io.esastack.codec.dubbo.client.DubboResponseCallback;
-import io.esastack.codec.dubbo.client.DubboResponseInBizCallback;
+import io.esastack.codec.dubbo.client.SyncDubboResponseCallback;
 import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
 import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
@@ -46,8 +47,12 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
 
     private final Map<Long, DubboResponseCallback> callbackMap;
 
-    //Only read/write in one Thread
+    /**
+     * Only read/write in one Thread
+     */
     private int sentHeartbeatCount;
+
+    private static final int MAX_SENT_HEARTBEAT_COUNT = 2;
 
     public DubboClientHandler(String connectionName, Map<Long, DubboResponseCallback> callbackMap) {
         super(); //auto release
@@ -116,24 +121,24 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
 
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
 
-        // 业务线程处理反序列化
-        if (callback instanceof DubboResponseInBizCallback) {
+        // Synchronous call, business thread deserialize
+        if (callback instanceof SyncDubboResponseCallback) {
             // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
             response.retain();
             DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
-            messageWrapper.addAllAttachment(ttfbAttachments);
-            ((DubboResponseInBizCallback) callback).onBizResponse(messageWrapper);
+            messageWrapper.addAttachments(ttfbAttachments);
+            ((SyncDubboResponseCallback) callback).onResponse(messageWrapper);
             return;
         }
 
-        SerializeHandler.get().deserialize(response, callback, ttfbAttachments);
+        SerializeHandler.get().deserialize(response, (AsyncDubboResponseCallback) callback, ttfbAttachments);
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             String channelInfo = getChannelInfo(ctx);
-            if (sentHeartbeatCount >= 2) {
+            if (sentHeartbeatCount >= MAX_SENT_HEARTBEAT_COUNT) {
                 LOGGER.info("Idle event triggered 3 times and no heartbeat responded, disconnect the channel{}",
                         channelInfo);
                 ctx.close();

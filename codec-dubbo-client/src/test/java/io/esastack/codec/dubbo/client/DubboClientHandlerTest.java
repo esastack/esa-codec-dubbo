@@ -31,7 +31,7 @@ import static org.junit.Assert.assertFalse;
 
 public class DubboClientHandlerTest {
     private final Map<Long, DubboResponseCallback> callbackMap = new ConcurrentHashMap<>();
-    private final DubboResponseCallback dubboResponseCallback = new DubboResponseCallback() {
+    private final DubboResponseCallback dubboResponseCallback = new AsyncDubboResponseCallback() {
         @Override
         public void onResponse(RpcResult rpcResult) {
 

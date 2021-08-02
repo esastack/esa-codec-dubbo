@@ -27,26 +27,25 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface DubboClient {
 
-    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
-                                             final Class<?> returnType);
+    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
+                                                  final Class<?> returnType);
 
-    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
-                                             final Class<?> returnType,
-                                             final Type genericReturnType);
+    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
+                                                  final Class<?> returnType,
+                                                  final Type genericReturnType);
 
-    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
-                                             final Class<?> returnType,
-                                             final long timeout);
+    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
+                                                  final Class<?> returnType,
+                                                  final long timeout);
 
-    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
-                                             final Class<?> returnType,
-                                             final Type genericReturnType,
-                                             final long timeout);
+    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
+                                                  final Class<?> returnType,
+                                                  final Type genericReturnType,
+                                                  final long timeout);
 
-    CompletableFuture<DubboMessageWrapper> sendRequestWaitInBiz(final DubboMessage request,
-                                                                final Class<?> returnType,
-                                                                final Type genericReturnType,
-                                                                final long timeout);
+    CompletableFuture<DubboMessageWrapper> sendRequestSync(final DubboMessage request,
+                                                           final Class<?> returnType,
+                                                           final long timeout);
 
     boolean isActive();
 

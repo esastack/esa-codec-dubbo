@@ -15,16 +15,8 @@
  */
 package io.esastack.codec.dubbo.client;
 
-public interface DubboResponseCallback {
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
-    void onError(Throwable e);
-
-    void onGotConnection(boolean b, String errMsg);
-
-    void onWriteToNetwork(boolean isSuccess, String errMsg);
-
-    /**
-     * 获取返回参数类型，用于反序列化
-     */
-    Class<?> getReturnType();
+public interface SyncDubboResponseCallback extends DubboResponseCallback {
+    void onResponse(DubboMessageWrapper messageWrapper);
 }

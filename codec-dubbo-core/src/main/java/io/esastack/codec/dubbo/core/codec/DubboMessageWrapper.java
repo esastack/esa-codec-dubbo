@@ -1,12 +1,12 @@
 package io.esastack.codec.dubbo.core.codec;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DubboMessageWrapper {
     private final DubboMessage message;
-    private final Map<String, String> attachment = new HashMap<>(16);
+    private final ConcurrentHashMap<String, String> attachment = new ConcurrentHashMap<>(16);
 
     public DubboMessageWrapper(final DubboMessage message) {
         this.message = message;
@@ -16,7 +16,7 @@ public class DubboMessageWrapper {
         return message;
     }
 
-    public Map<String, String> getAttachment() {
+    public Map<String, String> getAttachments() {
         return Collections.unmodifiableMap(attachment);
     }
 
@@ -24,7 +24,7 @@ public class DubboMessageWrapper {
         this.attachment.put(key, value);
     }
 
-    public void addAllAttachment(final Map<String, String> map) {
+    public void addAttachments(final Map<String, String> map) {
         this.attachment.putAll(map);
     }
 
