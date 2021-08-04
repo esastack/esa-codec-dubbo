@@ -16,8 +16,7 @@
 package io.esastack.codec.dubbo.client.serialize;
 
 import esa.commons.concurrent.ThreadFactories;
-import io.esastack.codec.dubbo.client.AsyncDubboResponseCallback;
-import io.esastack.codec.dubbo.client.DubboResponseCallback;
+import io.esastack.codec.dubbo.client.ResponseCallbackWithoutDeserialization;
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
@@ -68,7 +67,7 @@ public class SerializeHandler {
      * if the thread queue is full, do the deserialization in IO THREAD
      */
     public void deserialize(final DubboMessage response,
-                            final AsyncDubboResponseCallback callback,
+                            final ResponseCallbackWithoutDeserialization callback,
                             final Map<String, String> ttfbAttachments) {
         response.retain();
         if (ENABLE_SERIALIZE_POOL) {
@@ -83,7 +82,7 @@ public class SerializeHandler {
     }
 
     private void doDeserialize(final DubboMessage response,
-                               final AsyncDubboResponseCallback callback,
+                               final ResponseCallbackWithoutDeserialization callback,
                                final Map<String, String> ttfbAttachments) {
         try {
             final long startAt = System.currentTimeMillis();

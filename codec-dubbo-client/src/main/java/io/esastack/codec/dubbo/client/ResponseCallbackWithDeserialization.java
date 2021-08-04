@@ -17,6 +17,6 @@ package io.esastack.codec.dubbo.client;
 
 import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
-public interface SyncDubboResponseCallback extends DubboResponseCallback {
+public interface ResponseCallbackWithDeserialization extends ResponseCallback {
     void onResponse(DubboMessageWrapper messageWrapper);
 }

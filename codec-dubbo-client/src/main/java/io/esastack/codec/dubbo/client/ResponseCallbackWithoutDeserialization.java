@@ -15,16 +15,13 @@
  */
 package io.esastack.codec.dubbo.client;
 
-public interface DubboResponseCallback {
+import io.esastack.codec.dubbo.core.RpcResult;
 
-    void onError(Throwable e);
+import java.lang.reflect.Type;
 
-    void onGotConnection(boolean b, String errMsg);
+public interface ResponseCallbackWithoutDeserialization extends ResponseCallback {
 
-    void onWriteToNetwork(boolean isSuccess, String errMsg);
+    void onResponse(RpcResult rpcResult);
 
-    /**
-     * 获取返回参数类型，用于反序列化
-     */
-    Class<?> getReturnType();
+    Type getGenericReturnType();
 }

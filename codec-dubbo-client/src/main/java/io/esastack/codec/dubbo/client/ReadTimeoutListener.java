@@ -30,11 +30,11 @@ import java.util.Map;
 public class ReadTimeoutListener implements TimerTask {
     private final long requestId;
     private final long requestTimeout;
-    private final Map<Long, DubboResponseCallback> callbackMap;
+    private final Map<Long, ResponseCallback> callbackMap;
     private final ChannelFuture channelFuture;
 
     public ReadTimeoutListener(long requestTimeout, long requestId,
-                               Map<Long, DubboResponseCallback> callbackMap, ChannelFuture channelFuture) {
+                               Map<Long, ResponseCallback> callbackMap, ChannelFuture channelFuture) {
         this.requestTimeout = requestTimeout;
         this.requestId = requestId;
         this.callbackMap = callbackMap;
@@ -43,7 +43,7 @@ public class ReadTimeoutListener implements TimerTask {
 
     @Override
     public void run(Timeout timeout) {
-        final DubboResponseCallback callback = callbackMap.remove(requestId);
+        final ResponseCallback callback = callbackMap.remove(requestId);
         if (callback != null) {
             if (channelFuture.isDone()) {
                 if (channelFuture.isSuccess()) {

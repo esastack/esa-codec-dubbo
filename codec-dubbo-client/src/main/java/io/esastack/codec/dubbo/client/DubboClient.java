@@ -23,29 +23,64 @@ import java.lang.reflect.Type;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 客户端构建
+ * dubbo client
  */
 public interface DubboClient {
 
-    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                  final Class<?> returnType);
+    /**
+     * The response received after sending the request is deserialized in the IO thread of Netty
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @return              CompletableFuture&lt;RpcResult&gt;
+     */
+    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                             final Class<?> returnType);
 
-    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                  final Class<?> returnType,
-                                                  final Type genericReturnType);
+    /**
+     * The response received after sending the request is deserialized in the IO thread of Netty
+     * @param request           dubbo request
+     * @param returnType        return type
+     * @param genericReturnType return type of generic
+     * @return                  CompletableFuture&lt;RpcResult&gt;
+     */
+    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                             final Class<?> returnType,
+                                             final Type genericReturnType);
 
-    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                  final Class<?> returnType,
-                                                  final long timeout);
+    /**
+     * The response received after sending the request is deserialized in the IO thread of Netty
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @param timeout       timeout of this request
+     * @return              CompletableFuture&lt;RpcResult&gt;
+     */
+    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                             final Class<?> returnType,
+                                             final long timeout);
 
-    CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                  final Class<?> returnType,
-                                                  final Type genericReturnType,
-                                                  final long timeout);
+    /**
+     * The response received after sending the request is deserialized in the IO thread of Netty
+     * @param request           dubbo request
+     * @param returnType        return type
+     * @param genericReturnType return type of generic
+     * @param timeout           timeout of this request
+     * @return                  CompletableFuture&lt;RpcResult&gt;
+     */
+    CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                             final Class<?> returnType,
+                                             final Type genericReturnType,
+                                             final long timeout);
 
-    CompletableFuture<DubboMessageWrapper> sendRequestSync(final DubboMessage request,
-                                                           final Class<?> returnType,
-                                                           final long timeout);
+    /**
+     * The response received after sending the request is deserialized in the thread where the request is called
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @param timeout       timeout of this request
+     * @return              CompletableFuture&lt;DubboMessageWrapper&gt;
+     */
+    CompletableFuture<DubboMessageWrapper> sendRequestWaitResponseDeserialization(final DubboMessage request,
+                                                                                  final Class<?> returnType,
+                                                                                  final long timeout);
 
     boolean isActive();
 

@@ -15,7 +15,7 @@
  */
 package io.esastack.codec.dubbo.core.exception;
 
-public class SerializationException extends Exception {
+public class SerializationException extends RuntimeException {
 
     private static final long serialVersionUID = 1804772035454602911L;
 

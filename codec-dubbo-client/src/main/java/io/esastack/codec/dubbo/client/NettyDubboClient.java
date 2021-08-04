@@ -19,6 +19,7 @@ import esa.commons.StringUtils;
 import esa.commons.concurrent.ThreadFactories;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import esa.commons.spi.SpiLoader;
 import io.esastack.codec.commons.pool.DefaultMultiplexPool;
 import io.esastack.codec.commons.pool.MultiplexPool;
 import io.esastack.codec.commons.pool.exception.AcquireFailedException;
@@ -33,6 +34,7 @@ import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
 import io.esastack.codec.dubbo.core.exception.SerializationException;
 import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.serialization.api.Serialization;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.HashedWheelTimer;
@@ -40,6 +42,9 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timer;
 
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +64,24 @@ public class NettyDubboClient implements DubboClient {
 
     private final DubboClientBuilder builder;
 
+    private static final List<Class<?>> UNBOXED_PRIMITIVE_CLASS_LIST =
+            Arrays.asList(byte.class, short.class, char.class, int.class,
+                    long.class, float.class, double.class, boolean.class, null);
+
+    private static final Map<Byte, Map<Class<?>, DubboMessageWrapper>> UNBOXED_PRIMITIVE_DEFAULT_VALUE =
+            new HashMap<>(8);
+
+    static {
+        SpiLoader.cached(Serialization.class).getAll().forEach(serialization -> {
+            byte seriType = serialization.getSeriTypeId();
+            HashMap<Class<?>, DubboMessageWrapper> wrapperMap = new HashMap<>();
+            for (Class<?> clz : UNBOXED_PRIMITIVE_CLASS_LIST) {
+                wrapperMap.put(clz, createDubboMessageWrapperByClass(clz, seriType));
+            }
+            UNBOXED_PRIMITIVE_DEFAULT_VALUE.put(seriType, wrapperMap);
+        });
+    }
+
     public NettyDubboClient(DubboClientBuilder builder) {
         this.builder = builder;
         SslContext sslContext = createSslContext();
@@ -75,32 +98,32 @@ public class NettyDubboClient implements DubboClient {
     }
 
     @Override
-    public CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                         final Class<?> returnType) {
-        return sendRequestAsync(request, returnType, returnType);
+    public CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                                    final Class<?> returnType) {
+        return sendRequest(request, returnType, returnType);
     }
 
     @Override
-    public CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                         final Class<?> returnType,
-                                                         final Type genericReturnType) {
-        return sendRequestAsync(request, returnType, genericReturnType, builder.getReadTimeout());
+    public CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                                    final Class<?> returnType,
+                                                    final Type genericReturnType) {
+        return sendRequest(request, returnType, genericReturnType, builder.getReadTimeout());
     }
 
     @Override
-    public CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                         final Class<?> returnType,
-                                                         final long timeout) {
-        return sendRequestAsync(request, returnType, returnType, timeout);
+    public CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                                    final Class<?> returnType,
+                                                    final long timeout) {
+        return sendRequest(request, returnType, returnType, timeout);
     }
 
     @Override
-    public CompletableFuture<RpcResult> sendRequestAsync(final DubboMessage request,
-                                                         final Class<?> returnType,
-                                                         final Type genericReturnType,
-                                                         final long timeout) {
+    public CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
+                                                    final Class<?> returnType,
+                                                    final Type genericReturnType,
+                                                    final long timeout) {
         final CompletableFuture<RpcResult> cf = new CompletableFuture<>();
-        sendRequest(request, new AsyncDubboResponseCallback() {
+        sendRequest(request, new ResponseCallbackWithoutDeserialization() {
 
             private volatile long invocationFlushTime;
 
@@ -141,11 +164,11 @@ public class NettyDubboClient implements DubboClient {
     }
 
     @Override
-    public CompletableFuture<DubboMessageWrapper> sendRequestSync(DubboMessage request,
-                                                                  Class<?> returnType,
-                                                                  long timeout) {
+    public CompletableFuture<DubboMessageWrapper> sendRequestWaitResponseDeserialization(DubboMessage request,
+                                                                                         Class<?> returnType,
+                                                                                         long timeout) {
         final CompletableFuture<DubboMessageWrapper> cf = new CompletableFuture<>();
-        sendRequest(request, new SyncDubboResponseCallback() {
+        sendRequest(request, new ResponseCallbackWithDeserialization() {
 
             private volatile long invocationFlushTime;
 
@@ -180,7 +203,7 @@ public class NettyDubboClient implements DubboClient {
         return cf;
     }
 
-    private void sendRequest(DubboMessage request, DubboResponseCallback callback, long timeout) {
+    private void sendRequest(DubboMessage request, ResponseCallback callback, long timeout) {
         try {
             CompletableFuture<DubboNettyChannel> future = this.connectionPool.acquire();
             future.whenComplete((channel, throwable) -> {
@@ -207,7 +230,7 @@ public class NettyDubboClient implements DubboClient {
 
     private void handleRequestWhenAcquiredFailed(final Throwable cause,
                                                  final DubboMessage request,
-                                                 final DubboResponseCallback callback) {
+                                                 final ResponseCallback callback) {
         if (cause instanceof AcquireFailedException) {
             onError(request, callback, new ConnectFailedException(cause));
         } else {
@@ -217,7 +240,7 @@ public class NettyDubboClient implements DubboClient {
 
     private void handleRequestWhenAcquiredSuccess(final DubboNettyChannel connection,
                                                   final DubboMessage request,
-                                                  final DubboResponseCallback callback,
+                                                  final ResponseCallback callback,
                                                   final long timeout) {
         try {
             //回调获取到连接
@@ -243,7 +266,7 @@ public class NettyDubboClient implements DubboClient {
 
     }
 
-    private void sendRequest(final DubboResponseCallback callback,
+    private void sendRequest(final ResponseCallback callback,
                              final DubboNettyChannel connection,
                              final DubboMessage request,
                              final long timeout) {
@@ -276,7 +299,7 @@ public class NettyDubboClient implements DubboClient {
                 callback.onError(new RequestTimeoutException("Client sends data timeout: " + timeout + " ms."));
             }
         } else {
-            final Map<Long, DubboResponseCallback> callbackMap = connection.getDubboCallbackMap();
+            final Map<Long, ResponseCallback> callbackMap = connection.getDubboCallbackMap();
             callbackMap.put(requestId, callback);
             final ChannelFuture channelFuture = connection.writeAndFlush(request);
             channelFuture.addListener((ChannelFuture future) ->
@@ -288,7 +311,7 @@ public class NettyDubboClient implements DubboClient {
 
     private void notifyWriteDone(final ChannelFuture channelFuture,
                                  final long requestId,
-                                 final DubboResponseCallback callback,
+                                 final ResponseCallback callback,
                                  final DubboNettyChannel connection) {
         //通知网络写入事件
         if (channelFuture.isSuccess() && callback != null) {
@@ -312,7 +335,7 @@ public class NettyDubboClient implements DubboClient {
         }
     }
 
-    private void onError(final DubboMessage request, final DubboResponseCallback callback, final Throwable throwable) {
+    private void onError(final DubboMessage request, final ResponseCallback callback, final Throwable throwable) {
         callback.onError(throwable);
         ReferenceCountUtil.release(request);
     }
@@ -328,27 +351,38 @@ public class NettyDubboClient implements DubboClient {
         return null;
     }
 
-    private void onResponseDefaultValue(final DubboResponseCallback callback,
+    private void onResponseDefaultValue(final ResponseCallback callback,
                                         final DubboHeader header) {
-        if (callback instanceof SyncDubboResponseCallback) {
-            RpcResult result = RpcResult.success(header.getRequestId(),
-                    header.getSeriType(),
-                    getDefaultValue(callback.getReturnType()));
-            try {
-                DubboMessage dubboMessage = ServerCodecHelper.toDubboMessage(result);
-                ((SyncDubboResponseCallback) callback).onResponse(new DubboMessageWrapper(dubboMessage));
-            } catch (SerializationException e) {
-                logger.error("Failed to serialize default value response", e);
-                callback.onError(e);
+        byte seriType = header.getSeriType();
+        Class<?> returnType = callback.getReturnType();
+        if (callback instanceof ResponseCallbackWithDeserialization) {
+            Map<Class<?>, DubboMessageWrapper> map = UNBOXED_PRIMITIVE_DEFAULT_VALUE.get(seriType);
+            if (map == null) {
+                throw new SerializationException("Unsupported serialization type:" + seriType);
             }
+            DubboMessageWrapper wrapper = map.get(returnType);
+            // get non-primitive type's default value, such as Integer, String, Object etc.
+            if (wrapper == null) {
+                wrapper = UNBOXED_PRIMITIVE_DEFAULT_VALUE.get(seriType).get(null);
+            }
+            DubboMessage source = wrapper.getMessage();
+            DubboMessage target = new DubboMessage();
+            target.setHeader(source.getHeader());
+            target.setBody(source.getBody().copy());
+            ((ResponseCallbackWithDeserialization) callback).onResponse(new DubboMessageWrapper(target));
         } else {
-            ((AsyncDubboResponseCallback) callback).onResponse(
-                    RpcResult.success(header.getRequestId(), header.getSeriType(),
-                            getDefaultValue(callback.getReturnType())));
+            ((ResponseCallbackWithoutDeserialization) callback).onResponse(
+                    RpcResult.success(header.getRequestId(), seriType, getUnboxedPrimitiveDefaultValue(returnType)));
         }
     }
 
-    public static Object getDefaultValue(final Class<?> returnType) {
+    private static DubboMessageWrapper createDubboMessageWrapperByClass(final Class<?> clz, final byte seriType)
+            throws SerializationException {
+        RpcResult result = RpcResult.success(0, seriType, getUnboxedPrimitiveDefaultValue(clz));
+        return new DubboMessageWrapper(ServerCodecHelper.toDubboMessage(result));
+    }
+
+    public static Object getUnboxedPrimitiveDefaultValue(final Class<?> returnType) {
         if (returnType != null && returnType.isPrimitive()) {
             if (returnType == byte.class) {
                 return (byte) 0;

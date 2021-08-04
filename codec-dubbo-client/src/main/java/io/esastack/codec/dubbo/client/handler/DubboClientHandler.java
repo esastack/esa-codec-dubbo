@@ -17,9 +17,9 @@ package io.esastack.codec.dubbo.client.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.client.AsyncDubboResponseCallback;
-import io.esastack.codec.dubbo.client.DubboResponseCallback;
-import io.esastack.codec.dubbo.client.SyncDubboResponseCallback;
+import io.esastack.codec.dubbo.client.ResponseCallbackWithoutDeserialization;
+import io.esastack.codec.dubbo.client.ResponseCallback;
+import io.esastack.codec.dubbo.client.ResponseCallbackWithDeserialization;
 import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
 import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
@@ -45,7 +45,7 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
 
     private final String connectionName;
 
-    private final Map<Long, DubboResponseCallback> callbackMap;
+    private final Map<Long, ResponseCallback> callbackMap;
 
     /**
      * Only read/write in one Thread
@@ -54,7 +54,7 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
 
     private static final int MAX_SENT_HEARTBEAT_COUNT = 2;
 
-    public DubboClientHandler(String connectionName, Map<Long, DubboResponseCallback> callbackMap) {
+    public DubboClientHandler(String connectionName, Map<Long, ResponseCallback> callbackMap) {
         super(); //auto release
         this.connectionName = connectionName;
         this.callbackMap = callbackMap;
@@ -64,8 +64,8 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) {
         Throwable error = wrapIfNecessary(t);
         //回调所有的DubboCallback
-        for (Map.Entry<Long, DubboResponseCallback> entry : callbackMap.entrySet()) {
-            DubboResponseCallback callback = callbackMap.remove(entry.getKey());
+        for (Map.Entry<Long, ResponseCallback> entry : callbackMap.entrySet()) {
+            ResponseCallback callback = callbackMap.remove(entry.getKey());
             if (callback != null) {
                 callback.onError(error);
             }
@@ -86,8 +86,8 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        for (Map.Entry<Long, DubboResponseCallback> entry : callbackMap.entrySet()) {
-            DubboResponseCallback callback = callbackMap.get(entry.getKey());
+        for (Map.Entry<Long, ResponseCallback> entry : callbackMap.entrySet()) {
+            ResponseCallback callback = callbackMap.get(entry.getKey());
             if (callback != null) {
                 callback.onError(new UnknownResponseStatusException(
                         "Could not get remote server handle result",
@@ -112,7 +112,7 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
             return;
         }
         //获取异步请求回调函数
-        DubboResponseCallback callback = callbackMap.remove(requestId);
+        ResponseCallback callback = callbackMap.remove(requestId);
 
         //协议错误、超时被清理等情况
         if (callback == null) {
@@ -122,16 +122,17 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
 
         // Synchronous call, business thread deserialize
-        if (callback instanceof SyncDubboResponseCallback) {
+        if (callback instanceof ResponseCallbackWithDeserialization) {
             // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
             response.retain();
             DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
             messageWrapper.addAttachments(ttfbAttachments);
-            ((SyncDubboResponseCallback) callback).onResponse(messageWrapper);
+            ((ResponseCallbackWithDeserialization) callback).onResponse(messageWrapper);
             return;
         }
 
-        SerializeHandler.get().deserialize(response, (AsyncDubboResponseCallback) callback, ttfbAttachments);
+        SerializeHandler.get().deserialize(response,
+                (ResponseCallbackWithoutDeserialization) callback, ttfbAttachments);
     }
 
     @Override

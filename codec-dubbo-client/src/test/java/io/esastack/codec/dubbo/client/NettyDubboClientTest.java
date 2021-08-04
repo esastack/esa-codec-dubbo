@@ -60,7 +60,7 @@ public class NettyDubboClientTest {
     @Test
     public void requestSuccess() {
         final DubboMessage request = createDubboMessage(String.class, false);
-        final CompletableFuture<RpcResult> future = client.sendRequestAsync(request, String.class, 1000);
+        final CompletableFuture<RpcResult> future = client.sendRequest(request, String.class, 1000);
         try {
             RpcResult rpcResult = future.get();
             Assert.assertEquals(rpcResult.getValue(), "test");
@@ -70,7 +70,8 @@ public class NettyDubboClientTest {
         }
 
         //final DubboMessage timeoutRequest = createDubboMessage(String.class, false);
-        //final CompletableFuture<RpcResult> timeoutFuture = client.sendRequestAsync(timeoutRequest, String.class, 5);
+        //final CompletableFuture<RpcResult> timeoutFuture =
+        // client.sendRequest(timeoutRequest, String.class, 5);
         //try {
         //    timeoutFuture.get();
         //} catch (Throwable ex) {
@@ -78,7 +79,8 @@ public class NettyDubboClientTest {
         //    assertEquals(ResponseTimeoutException.class, ex.getCause().getClass());
         //}
         //final DubboMessage onewayRequest = createDubboMessage(String.class, true);
-        //CompletableFuture<RpcResult> onewayFuture = client.sendRequestAsync(onewayRequest, String.class, 1000);
+        //CompletableFuture<RpcResult> onewayFuture =
+        // client.sendRequest(onewayRequest, String.class, 1000);
         //try {
         //    RpcResult rpcResult = onewayFuture.get();
         //    assertNull(rpcResult.getValue());
@@ -88,7 +90,8 @@ public class NettyDubboClientTest {
         //}
         //assert onewayRequest != null;
         //onewayRequest.getHeader().setOnewayWaited(true);
-        //CompletableFuture<RpcResult> onewayWaitedRequest = client.sendRequestAsync(onewayRequest, String.class, 1000);
+        //CompletableFuture<RpcResult> onewayWaitedRequest =
+        // client.sendRequest(onewayRequest, String.class, 1000);
         //try {
         //    RpcResult rpcResult = onewayWaitedRequest.get();
         //    assertNull(rpcResult.getValue());
@@ -101,14 +104,14 @@ public class NettyDubboClientTest {
         Thread.sleep(1000);
         final DubboMessage request = createDubboMessage(String.class, false);
         final NettyDubboClient nettyDubboClient = createClient(20000);
-        final CompletableFuture<RpcResult> future = nettyDubboClient.sendRequestAsync(request, String.class, 1000);
+        final CompletableFuture<RpcResult> future = nettyDubboClient.sendRequest(request, String.class, 1000);
         try {
             future.get();
             fail();
         } catch (Throwable ex) {
             assertTrue(ex.getCause() instanceof ConnectFailedException);
         }
-        final CompletableFuture<RpcResult> requestFuture = nettyDubboClient.sendRequestAsync(request, String.class);
+        final CompletableFuture<RpcResult> requestFuture = nettyDubboClient.sendRequest(request, String.class);
         try {
             requestFuture.get();
             fail();
@@ -131,15 +134,15 @@ public class NettyDubboClientTest {
         final DubboMessage doubleRequest = createDubboMessage(double.class, true);
         final DubboMessage floatRequest = createDubboMessage(float.class, true);
         final DubboMessage timeoutRequest = createDubboMessage(int.class, true);
-        CompletableFuture<RpcResult> byteResult = client.sendRequestAsync(byteRequest, byte.class, 1000);
-        CompletableFuture<RpcResult> shortResult = client.sendRequestAsync(shortRequest, short.class, 1000);
-        CompletableFuture<RpcResult> intResult = client.sendRequestAsync(intRequest, int.class, 1000);
-        CompletableFuture<RpcResult> longResult = client.sendRequestAsync(longRequest, long.class, 1000);
-        CompletableFuture<RpcResult> booleanResult = client.sendRequestAsync(booleanRequest, boolean.class, 1000);
-        CompletableFuture<RpcResult> charResult = client.sendRequestAsync(charRequest, char.class, 1000);
-        CompletableFuture<RpcResult> doubleResult = client.sendRequestAsync(doubleRequest, double.class, 1000);
-        CompletableFuture<RpcResult> floatResult = client.sendRequestAsync(floatRequest, float.class, 1000);
-        CompletableFuture<RpcResult> timeoutResult = client.sendRequestAsync(timeoutRequest, int.class, 1);
+        CompletableFuture<RpcResult> byteResult = client.sendRequest(byteRequest, byte.class, 1000);
+        CompletableFuture<RpcResult> shortResult = client.sendRequest(shortRequest, short.class, 1000);
+        CompletableFuture<RpcResult> intResult = client.sendRequest(intRequest, int.class, 1000);
+        CompletableFuture<RpcResult> longResult = client.sendRequest(longRequest, long.class, 1000);
+        CompletableFuture<RpcResult> booleanResult = client.sendRequest(booleanRequest, boolean.class, 1000);
+        CompletableFuture<RpcResult> charResult = client.sendRequest(charRequest, char.class, 1000);
+        CompletableFuture<RpcResult> doubleResult = client.sendRequest(doubleRequest, double.class, 1000);
+        CompletableFuture<RpcResult> floatResult = client.sendRequest(floatRequest, float.class, 1000);
+        CompletableFuture<RpcResult> timeoutResult = client.sendRequest(timeoutRequest, int.class, 1);
         try {
             assertEquals((byte) 0, byteResult.get().getValue());
             assertEquals((short) 0, shortResult.get().getValue());
@@ -160,7 +163,7 @@ public class NettyDubboClientTest {
     public void requestTimeout() throws InterruptedException {
         Thread.sleep(1000);
         final DubboMessage request = createDubboMessage(String.class, false);
-        final CompletableFuture<RpcResult> future = client.sendRequestAsync(request, String.class, 100);
+        final CompletableFuture<RpcResult> future = client.sendRequest(request, String.class, 100);
         try {
             future.get();
             fail();
@@ -172,7 +175,8 @@ public class NettyDubboClientTest {
     //@Test
     //public void tlsFallbackToNormal() {
     //    final DubboMessage request = createDubboMessage();
-    //    final CompletableFuture<RpcResult> future = tlsClient.sendRequestAsync(request, String.class, 1000);
+    //    final CompletableFuture<RpcResult> future =
+    //    tlsClient.sendRequest(request, String.class, 1000);
     //    try {
     //        RpcResult rpcResult = future.get();
     //        Assert.assertEquals(rpcResult.getValue(), "test");
