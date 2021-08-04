@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 public interface DubboClient {
 
     /**
-     * The response received after sending the request is deserialized in the IO thread of Netty
+     * The response received is deserialized already
      * @param request       dubbo request
      * @param returnType    return type
      * @return              CompletableFuture&lt;RpcResult&gt;
@@ -37,7 +37,7 @@ public interface DubboClient {
                                              final Class<?> returnType);
 
     /**
-     * The response received after sending the request is deserialized in the IO thread of Netty
+     * The response received is deserialized already
      * @param request           dubbo request
      * @param returnType        return type
      * @param genericReturnType return type of generic
@@ -48,7 +48,7 @@ public interface DubboClient {
                                              final Type genericReturnType);
 
     /**
-     * The response received after sending the request is deserialized in the IO thread of Netty
+     * The response received is deserialized already
      * @param request       dubbo request
      * @param returnType    return type
      * @param timeout       timeout of this request
@@ -59,7 +59,7 @@ public interface DubboClient {
                                              final long timeout);
 
     /**
-     * The response received after sending the request is deserialized in the IO thread of Netty
+     * The response received is deserialized already
      * @param request           dubbo request
      * @param returnType        return type
      * @param genericReturnType return type of generic
@@ -72,15 +72,15 @@ public interface DubboClient {
                                              final long timeout);
 
     /**
-     * The response received after sending the request is deserialized in the thread where the request is called
+     * The response received is not deserialized yet, you must deserialize the response by yourself
      * @param request       dubbo request
      * @param returnType    return type
      * @param timeout       timeout of this request
      * @return              CompletableFuture&lt;DubboMessageWrapper&gt;
      */
-    CompletableFuture<DubboMessageWrapper> sendRequestWaitResponseDeserialization(final DubboMessage request,
-                                                                                  final Class<?> returnType,
-                                                                                  final long timeout);
+    CompletableFuture<DubboMessageWrapper> sendReqWithoutRespDeserialize(final DubboMessage request,
+                                                                         final Class<?> returnType,
+                                                                         final long timeout);
 
     boolean isActive();
 

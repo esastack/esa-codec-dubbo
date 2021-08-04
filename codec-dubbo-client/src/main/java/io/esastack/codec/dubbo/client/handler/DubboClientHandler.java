@@ -17,9 +17,9 @@ package io.esastack.codec.dubbo.client.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.client.ResponseCallbackWithoutDeserialization;
-import io.esastack.codec.dubbo.client.ResponseCallback;
 import io.esastack.codec.dubbo.client.ResponseCallbackWithDeserialization;
+import io.esastack.codec.dubbo.client.ResponseCallback;
+import io.esastack.codec.dubbo.client.ResponseCallbackWithoutDeserialization;
 import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
 import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
@@ -122,17 +122,17 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
 
         // Synchronous call, business thread deserialize
-        if (callback instanceof ResponseCallbackWithDeserialization) {
+        if (callback instanceof ResponseCallbackWithoutDeserialization) {
             // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
             response.retain();
             DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
             messageWrapper.addAttachments(ttfbAttachments);
-            ((ResponseCallbackWithDeserialization) callback).onResponse(messageWrapper);
+            ((ResponseCallbackWithoutDeserialization) callback).onResponse(messageWrapper);
             return;
         }
 
         SerializeHandler.get().deserialize(response,
-                (ResponseCallbackWithoutDeserialization) callback, ttfbAttachments);
+                (ResponseCallbackWithDeserialization) callback, ttfbAttachments);
     }
 
     @Override

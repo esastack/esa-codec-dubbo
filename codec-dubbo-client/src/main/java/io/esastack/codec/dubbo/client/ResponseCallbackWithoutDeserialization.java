@@ -15,13 +15,8 @@
  */
 package io.esastack.codec.dubbo.client;
 
-import io.esastack.codec.dubbo.core.RpcResult;
-
-import java.lang.reflect.Type;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
 public interface ResponseCallbackWithoutDeserialization extends ResponseCallback {
-
-    void onResponse(RpcResult rpcResult);
-
-    Type getGenericReturnType();
+    void onResponse(DubboMessageWrapper messageWrapper);
 }

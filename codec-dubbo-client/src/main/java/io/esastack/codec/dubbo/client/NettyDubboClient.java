@@ -123,7 +123,7 @@ public class NettyDubboClient implements DubboClient {
                                                     final Type genericReturnType,
                                                     final long timeout) {
         final CompletableFuture<RpcResult> cf = new CompletableFuture<>();
-        sendRequest(request, new ResponseCallbackWithoutDeserialization() {
+        sendRequest(request, new ResponseCallbackWithDeserialization() {
 
             private volatile long invocationFlushTime;
 
@@ -164,11 +164,11 @@ public class NettyDubboClient implements DubboClient {
     }
 
     @Override
-    public CompletableFuture<DubboMessageWrapper> sendRequestWaitResponseDeserialization(DubboMessage request,
-                                                                                         Class<?> returnType,
-                                                                                         long timeout) {
+    public CompletableFuture<DubboMessageWrapper> sendReqWithoutRespDeserialize(DubboMessage request,
+                                                                                Class<?> returnType,
+                                                                                long timeout) {
         final CompletableFuture<DubboMessageWrapper> cf = new CompletableFuture<>();
-        sendRequest(request, new ResponseCallbackWithDeserialization() {
+        sendRequest(request, new ResponseCallbackWithoutDeserialization() {
 
             private volatile long invocationFlushTime;
 
@@ -355,7 +355,7 @@ public class NettyDubboClient implements DubboClient {
                                         final DubboHeader header) {
         byte seriType = header.getSeriType();
         Class<?> returnType = callback.getReturnType();
-        if (callback instanceof ResponseCallbackWithDeserialization) {
+        if (callback instanceof ResponseCallbackWithoutDeserialization) {
             Map<Class<?>, DubboMessageWrapper> map = UNBOXED_PRIMITIVE_DEFAULT_VALUE.get(seriType);
             if (map == null) {
                 throw new SerializationException("Unsupported serialization type:" + seriType);
@@ -369,9 +369,9 @@ public class NettyDubboClient implements DubboClient {
             DubboMessage target = new DubboMessage();
             target.setHeader(source.getHeader());
             target.setBody(source.getBody().copy());
-            ((ResponseCallbackWithDeserialization) callback).onResponse(new DubboMessageWrapper(target));
+            ((ResponseCallbackWithoutDeserialization) callback).onResponse(new DubboMessageWrapper(target));
         } else {
-            ((ResponseCallbackWithoutDeserialization) callback).onResponse(
+            ((ResponseCallbackWithDeserialization) callback).onResponse(
                     RpcResult.success(header.getRequestId(), seriType, getUnboxedPrimitiveDefaultValue(returnType)));
         }
     }
