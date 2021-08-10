@@ -54,6 +54,9 @@ public class DubboServerBuilderTest {
                 .setChannelOptions(options)
                 .setBindIp("localhost")
                 .setHeartbeatTimeoutSeconds(66)
+                .setIoThreads(defaultIoThreads)
+                .setBossThreads(1)
+                .setUnixDomainSocketFile("demo")
                 .setBizHandler(new DubboServerBizHandler() {
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -80,5 +83,8 @@ public class DubboServerBuilderTest {
         assertEquals("localhost", serverBuilder.getBindIp());
         assertTrue(serverBuilder.getChildChannelOptions().containsKey(ChannelOption.SO_REUSEADDR));
         assertTrue(serverBuilder.getChannelOptions().containsKey(ChannelOption.SO_BACKLOG));
+        assertEquals(defaultIoThreads, serverBuilder.getIoThreads());
+        assertEquals(1, serverBuilder.getBossThreads());
+        assertEquals("demo", serverBuilder.getUnixDomainSocketFile());
     }
 }

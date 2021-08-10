@@ -19,6 +19,9 @@ import io.esastack.codec.dubbo.client.handler.DubboClientHandler;
 import io.esastack.codec.dubbo.client.handler.ExceptionHandler;
 import io.esastack.codec.dubbo.client.handler.IdleEventHandler;
 import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.codec.DubboMessage;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
+import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Test;
@@ -26,11 +29,16 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class DubboClientHandlerTest {
     private final Map<Long, ResponseCallback> callbackMap = new ConcurrentHashMap<>();
+    private final AtomicReference<String> result = new AtomicReference<>();
+    private final CountDownLatch latch = new CountDownLatch(1);
     private final ResponseCallback dubboResponseCallback = new ResponseCallbackWithDeserialization() {
         @Override
         public void onResponse(RpcResult rpcResult) {
@@ -63,6 +71,34 @@ public class DubboClientHandlerTest {
         }
     };
 
+    private final ResponseCallback callback = new ResponseCallbackWithoutDeserialization() {
+        @Override
+        public void onResponse(DubboMessageWrapper messageWrapper) {
+            result.set("ok");
+            latch.countDown();
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
+
+        @Override
+        public void onGotConnection(boolean b, String errMsg) {
+
+        }
+
+        @Override
+        public void onWriteToNetwork(boolean isSuccess, String errMsg) {
+
+        }
+
+        @Override
+        public Class<?> getReturnType() {
+            return null;
+        }
+    };
+
     @Test
     public void exceptionCaught() {
         callbackMap.put(1L, dubboResponseCallback);
@@ -84,6 +120,16 @@ public class DubboClientHandlerTest {
                 e.printStackTrace();
             }
         }
+    }
 
+    @Test
+    public void channelRead0() throws InterruptedException {
+        callbackMap.put(1L, callback);
+        DubboClientHandler clientHandler = new DubboClientHandler("test", callbackMap);
+        EmbeddedChannel embeddedChannel = new EmbeddedChannel(clientHandler);
+        DubboMessage response = ServerCodecHelper.toDubboMessage(RpcResult.success(1L, (byte) 2, "ok"));
+        embeddedChannel.writeInbound(response);
+        latch.await();
+        assertEquals("ok", result.get());
     }
 }

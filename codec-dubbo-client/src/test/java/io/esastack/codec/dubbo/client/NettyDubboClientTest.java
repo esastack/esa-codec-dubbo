@@ -22,12 +22,7 @@ import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.ssl.DubboSslContextBuilder;
-import io.esastack.codec.dubbo.server.NettyDubboServer;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import java.util.concurrent.CompletableFuture;
@@ -39,12 +34,10 @@ public class NettyDubboClientTest {
 
     private static volatile NettyDubboClient client;
 
-    private static volatile NettyDubboServer server;
-
     @BeforeClass
     public static void startServer() {
         try {
-            server = DubboSDKServer.start(new String[0]);
+            DubboSDKServer.start(new String[0]);
         } catch (Exception e) {
             //throw new RuntimeException(e);
         }
@@ -69,34 +62,31 @@ public class NettyDubboClientTest {
             fail();
         }
 
-        //final DubboMessage timeoutRequest = createDubboMessage(String.class, false);
-        //final CompletableFuture<RpcResult> timeoutFuture =
-        // client.sendRequest(timeoutRequest, String.class, 5);
-        //try {
-        //    timeoutFuture.get();
-        //} catch (Throwable ex) {
-        //    ex.printStackTrace();
-        //    assertEquals(ResponseTimeoutException.class, ex.getCause().getClass());
-        //}
-        //final DubboMessage onewayRequest = createDubboMessage(String.class, true);
-        //CompletableFuture<RpcResult> onewayFuture =
-        // client.sendRequest(onewayRequest, String.class, 1000);
-        //try {
-        //    RpcResult rpcResult = onewayFuture.get();
-        //    assertNull(rpcResult.getValue());
-        //} catch (Exception e) {
-        //    e.printStackTrace();
-        //    fail();
-        //}
-        //assert onewayRequest != null;
-        //onewayRequest.getHeader().setOnewayWaited(true);
-        //CompletableFuture<RpcResult> onewayWaitedRequest =
-        // client.sendRequest(onewayRequest, String.class, 1000);
-        //try {
-        //    RpcResult rpcResult = onewayWaitedRequest.get();
-        //    assertNull(rpcResult.getValue());
-        //} catch (Exception ignore) {
-        //}
+        final DubboMessage timeoutRequest = createDubboMessage(String.class, false);
+        final CompletableFuture<RpcResult> timeoutFuture = client.sendRequest(timeoutRequest, String.class, 5);
+        try {
+            timeoutFuture.get();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            assertEquals(ResponseTimeoutException.class, ex.getCause().getClass());
+        }
+        final DubboMessage onewayRequest = createDubboMessage(String.class, true);
+        CompletableFuture<RpcResult> onewayFuture = client.sendRequest(onewayRequest, String.class, 1000);
+        try {
+            RpcResult rpcResult = onewayFuture.get();
+            assertNull(rpcResult.getValue());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+        assert onewayRequest != null;
+        onewayRequest.getHeader().setOnewayWaited(true);
+        CompletableFuture<RpcResult> onewayWaitedRequest = client.sendRequest(onewayRequest, String.class, 1000);
+        try {
+            RpcResult rpcResult = onewayWaitedRequest.get();
+            assertNull(rpcResult.getValue());
+        } catch (Exception ignore) {
+        }
     }
 
     @Test

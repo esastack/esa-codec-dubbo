@@ -33,8 +33,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class BaseServerBizHandlerAdapterTest {
 
@@ -65,6 +64,10 @@ public class BaseServerBizHandlerAdapterTest {
         BaseServerBizHandlerAdapter serverBizHandlerAdapter = new BaseServerBizHandlerAdapter() {
             @Override
             protected void process0(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
+                assertEquals("embedded", dubboResponseHolder.getLocalAddressString());
+                assertEquals("embedded", dubboResponseHolder.getRemoteAddressString());
+                assertEquals("embedded", dubboResponseHolder.getLocalSocketAddress().toString());
+                assertEquals("embedded", dubboResponseHolder.getRemoteSocketAddress().toString());
                 RpcInvocation invocation = null;
                 try {
                     invocation = ServerCodecHelper.toRpcInvocation(request);
