@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.junit.Assert.assertFalse;
 
 public class DubboClientHandlerTest {
-    private final Map<Long, DubboResponseCallback> callbackMap = new ConcurrentHashMap<>();
-    private final DubboResponseCallback dubboResponseCallback = new DubboResponseCallback() {
+    private final Map<Long, ResponseCallback> callbackMap = new ConcurrentHashMap<>();
+    private final ResponseCallback dubboResponseCallback = new ResponseCallbackWithDeserialization() {
         @Override
         public void onResponse(RpcResult rpcResult) {
 

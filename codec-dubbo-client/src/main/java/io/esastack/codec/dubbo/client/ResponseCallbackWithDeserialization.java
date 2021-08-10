@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.esastack.codec.dubbo.core.exception;
+package io.esastack.codec.dubbo.client;
 
-public class SerializationException extends RuntimeException {
+import io.esastack.codec.dubbo.core.RpcResult;
 
-    private static final long serialVersionUID = 1804772035454602911L;
+import java.lang.reflect.Type;
 
-    public SerializationException(String msg) {
-        super(msg);
-    }
+public interface ResponseCallbackWithDeserialization extends ResponseCallback {
 
-    public SerializationException(Throwable t) {
-        super(t);
-    }
+    void onResponse(RpcResult rpcResult);
 
-    public SerializationException(String msg, Throwable t) {
-        super(msg, t);
-    }
+    Type getGenericReturnType();
 }

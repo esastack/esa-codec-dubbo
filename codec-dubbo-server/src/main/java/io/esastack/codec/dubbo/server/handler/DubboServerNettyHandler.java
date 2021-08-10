@@ -51,7 +51,7 @@ public class DubboServerNettyHandler extends SimpleChannelInboundHandler<DubboMe
         } else {
             if (t instanceof UnknownProtocolException) {
                 // Distinguish protocol analysis exception
-                LOGGER.warn("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
+                LOGGER.info("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
             } else {
                 LOGGER.error("Disconnect from client[" + socketAddress.toString() + "], caused by: ", t);
             }

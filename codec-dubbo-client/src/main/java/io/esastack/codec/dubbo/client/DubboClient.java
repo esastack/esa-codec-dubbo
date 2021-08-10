@@ -17,30 +17,70 @@ package io.esastack.codec.dubbo.client;
 
 import io.esastack.codec.dubbo.core.RpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
 import java.lang.reflect.Type;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 客户端构建
+ * dubbo client
  */
 public interface DubboClient {
 
+    /**
+     * The response received is deserialized already
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @return              CompletableFuture&lt;RpcResult&gt;
+     */
     CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
                                              final Class<?> returnType);
 
+    /**
+     * The response received is deserialized already
+     * @param request           dubbo request
+     * @param returnType        return type
+     * @param genericReturnType return type of generic
+     * @return                  CompletableFuture&lt;RpcResult&gt;
+     */
     CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
                                              final Class<?> returnType,
                                              final Type genericReturnType);
 
+    /**
+     * The response received is deserialized already
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @param timeout       timeout of this request
+     * @return              CompletableFuture&lt;RpcResult&gt;
+     */
     CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
                                              final Class<?> returnType,
                                              final long timeout);
 
+    /**
+     * The response received is deserialized already
+     * @param request           dubbo request
+     * @param returnType        return type
+     * @param genericReturnType return type of generic
+     * @param timeout           timeout of this request
+     * @return                  CompletableFuture&lt;RpcResult&gt;
+     */
     CompletableFuture<RpcResult> sendRequest(final DubboMessage request,
                                              final Class<?> returnType,
                                              final Type genericReturnType,
                                              final long timeout);
+
+    /**
+     * The response received is not deserialized yet, you must deserialize the response by yourself
+     * @param request       dubbo request
+     * @param returnType    return type
+     * @param timeout       timeout of this request
+     * @return              CompletableFuture&lt;DubboMessageWrapper&gt;
+     */
+    CompletableFuture<DubboMessageWrapper> sendReqWithoutRespDeserialize(final DubboMessage request,
+                                                                         final Class<?> returnType,
+                                                                         final long timeout);
 
     boolean isActive();
 

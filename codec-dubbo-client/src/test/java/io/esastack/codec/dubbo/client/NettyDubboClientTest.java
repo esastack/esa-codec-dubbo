@@ -70,7 +70,8 @@ public class NettyDubboClientTest {
         }
 
         //final DubboMessage timeoutRequest = createDubboMessage(String.class, false);
-        //final CompletableFuture<RpcResult> timeoutFuture = client.sendRequest(timeoutRequest, String.class, 5);
+        //final CompletableFuture<RpcResult> timeoutFuture =
+        // client.sendRequest(timeoutRequest, String.class, 5);
         //try {
         //    timeoutFuture.get();
         //} catch (Throwable ex) {
@@ -78,7 +79,8 @@ public class NettyDubboClientTest {
         //    assertEquals(ResponseTimeoutException.class, ex.getCause().getClass());
         //}
         //final DubboMessage onewayRequest = createDubboMessage(String.class, true);
-        //CompletableFuture<RpcResult> onewayFuture = client.sendRequest(onewayRequest, String.class, 1000);
+        //CompletableFuture<RpcResult> onewayFuture =
+        // client.sendRequest(onewayRequest, String.class, 1000);
         //try {
         //    RpcResult rpcResult = onewayFuture.get();
         //    assertNull(rpcResult.getValue());
@@ -88,7 +90,8 @@ public class NettyDubboClientTest {
         //}
         //assert onewayRequest != null;
         //onewayRequest.getHeader().setOnewayWaited(true);
-        //CompletableFuture<RpcResult> onewayWaitedRequest = client.sendRequest(onewayRequest, String.class, 1000);
+        //CompletableFuture<RpcResult> onewayWaitedRequest =
+        // client.sendRequest(onewayRequest, String.class, 1000);
         //try {
         //    RpcResult rpcResult = onewayWaitedRequest.get();
         //    assertNull(rpcResult.getValue());
@@ -172,7 +175,8 @@ public class NettyDubboClientTest {
     //@Test
     //public void tlsFallbackToNormal() {
     //    final DubboMessage request = createDubboMessage();
-    //    final CompletableFuture<RpcResult> future = tlsClient.sendRequest(request, String.class, 1000);
+    //    final CompletableFuture<RpcResult> future =
+    //    tlsClient.sendRequest(request, String.class, 1000);
     //    try {
     //        RpcResult rpcResult = future.get();
     //        Assert.assertEquals(rpcResult.getValue(), "test");

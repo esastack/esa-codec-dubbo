@@ -15,26 +15,8 @@
  */
 package io.esastack.codec.dubbo.client;
 
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
 
-import java.lang.reflect.Type;
-
-public interface DubboResponseCallback {
-
-    void onResponse(RpcResult rpcResult);
-
-    void onError(Throwable e);
-
-    void onGotConnection(boolean b, String errMsg);
-
-    void onWriteToNetwork(boolean isSuccess, String errMsg);
-
-    /**
-     * 获取返回参数类型，用于反序列化
-     *
-     * @return
-     */
-    Class<?> getReturnType();
-
-    Type getGenericReturnType();
+public interface ResponseCallbackWithoutDeserialization extends ResponseCallback {
+    void onResponse(DubboMessageWrapper messageWrapper);
 }
