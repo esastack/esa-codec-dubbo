@@ -82,8 +82,8 @@ public class DubboSDKClientTests {
                         RpcInvocation invocation = buildRpcInvocation();
                         DubboMessage dubboRequest = ClientCodecHelper.toDubboMessage(invocation);
 
-                        CompletableFuture<RpcResult> responseFuture =
-                                dubboNettyClient.sendRequest(dubboRequest, invocation.getReturnType());
+                        CompletableFuture<RpcResult> responseFuture = dubboNettyClient.sendRequest(dubboRequest,
+                                        invocation.getReturnType());
 
                         RpcResult rpcResult = responseFuture.get();
                         if (rpcResult.getStatus() != 20) {

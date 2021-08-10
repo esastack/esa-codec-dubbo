@@ -19,7 +19,7 @@ import esa.commons.StringUtils;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.dubbo.client.DubboClientBuilder;
-import io.esastack.codec.dubbo.client.DubboResponseCallback;
+import io.esastack.codec.dubbo.client.ResponseCallback;
 import io.esastack.codec.dubbo.client.exception.ConnectFailedException;
 import io.esastack.codec.dubbo.client.handler.DubboClientHandler;
 import io.esastack.codec.dubbo.client.utils.NettyConstants;
@@ -90,7 +90,7 @@ public class DubboNettyChannel {
     /**
      * 请求唯一ID和异步回调函数进行映射
      */
-    private final Map<Long, DubboResponseCallback> callbackMap;
+    private final Map<Long, ResponseCallback> callbackMap;
     /**
      * DubboClient配置参数
      */
@@ -192,6 +192,7 @@ public class DubboNettyChannel {
         return closeFuture;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private Bootstrap newBootStrap() {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(GROUP);
@@ -256,7 +257,7 @@ public class DubboNettyChannel {
         return this.requestIdAtomic;
     }
 
-    public Map<Long, DubboResponseCallback> getDubboCallbackMap() {
+    public Map<Long, ResponseCallback> getDubboCallbackMap() {
         return this.callbackMap;
     }
 

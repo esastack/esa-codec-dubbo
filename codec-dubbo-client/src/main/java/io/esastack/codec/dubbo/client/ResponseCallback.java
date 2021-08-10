@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.esastack.codec.dubbo.core.exception;
+package io.esastack.codec.dubbo.client;
 
-public class SerializationException extends RuntimeException {
+public interface ResponseCallback {
 
-    private static final long serialVersionUID = 1804772035454602911L;
+    void onError(Throwable e);
 
-    public SerializationException(String msg) {
-        super(msg);
-    }
+    void onGotConnection(boolean b, String errMsg);
 
-    public SerializationException(Throwable t) {
-        super(t);
-    }
+    void onWriteToNetwork(boolean isSuccess, String errMsg);
 
-    public SerializationException(String msg, Throwable t) {
-        super(msg, t);
-    }
+    /**
+     * 获取返回参数类型，用于反序列化
+     */
+    Class<?> getReturnType();
 }
