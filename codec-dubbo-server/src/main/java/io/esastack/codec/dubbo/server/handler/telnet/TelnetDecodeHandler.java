@@ -91,96 +91,6 @@ public class TelnetDecodeHandler extends ByteToMessageDecoder {
             /* Linux Pause */
             new byte[]{-1, -19, -1, -3, 6});
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        int readerIndex = in.readerIndex();
-        String msg = decode(ctx, in);
-        if (msg != null) {
-            out.add(msg);
-        } else {
-            if (ctx.channel().isActive()) {
-                in.readerIndex(readerIndex);
-            }
-        }
-    }
-
-    private String decode(ChannelHandlerContext ctx, ByteBuf in) {
-        int readableBytes = in.readableBytes();
-        if (readableBytes == 0) {
-            return null;
-        }
-        byte[] message = new byte[readableBytes];
-        in.readBytes(message);
-        if (message[readableBytes - 1] == BACKSPACE_BYTE) {
-            boolean doubleChar = message.length >= 3 && message[message.length - 3] < 0;
-            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(
-                    (new String(doubleChar ? BACKSPACE_DOUBLE : BACKSPACE, StandardCharsets.UTF_8)).getBytes()));
-            return null;
-        }
-        for (Object command : EXIT) {
-            if (isEquals(message, (byte[]) command)) {
-                if (ctx.channel().isActive()) {
-                    logger.info("Close channel on exit command: " + Arrays.toString((byte[]) command));
-                    ctx.channel().close();
-                }
-                return null;
-            }
-        }
-        boolean up = endsWith(message, UP);
-        boolean down = endsWith(message, DOWN);
-        if (up || down) {
-            processUpAddDown(ctx, up);
-            return null;
-        }
-        byte[] enter = null;
-        for (Object command : ENTER) {
-            if (endsWith(message, (byte[]) command)) {
-                enter = (byte[]) command;
-                break;
-            }
-        }
-        if (enter == null) {
-            return null;
-        }
-        try {
-            LinkedList<String> history = ctx.channel().attr(HISTORY_LIST_KEY).get();
-            Integer index = ctx.channel().attr(HISTORY_INDEX_KEY).get();
-            ctx.channel().attr(HISTORY_INDEX_KEY).set(null);
-            if (history != null && history.size() > 0 && index != null && index >= 0 && index < history.size()) {
-                String value = history.get(index);
-                if (value != null) {
-                    byte[] b1 = value.getBytes();
-                    byte[] b2 = new byte[b1.length + message.length];
-                    System.arraycopy(b1, 0, b2, 0, b1.length);
-                    System.arraycopy(message, 0, b2, b1.length, message.length);
-                    message = b2;
-                }
-            }
-            String result = toString(message);
-            if (result.trim().length() > 0) {
-                if (history == null) {
-                    history = new LinkedList<>();
-                    ctx.channel().attr(HISTORY_LIST_KEY).set(history);
-                }
-                if (history.isEmpty()) {
-                    history.addLast(result);
-                } else if (!result.equals(history.getLast())) {
-                    history.remove(result);
-                    history.addLast(result);
-                    if (history.size() > 10) {
-                        history.removeFirst();
-                    }
-                }
-            }
-            return result;
-        } catch (UnsupportedEncodingException e) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("UnsupportedEncodingException" + e);
-            }
-            return null;
-        }
-    }
-
     private static boolean isEquals(byte[] message, byte[] command) {
         return message.length == command.length && endsWith(message, command);
     }
@@ -278,5 +188,95 @@ public class TelnetDecodeHandler extends ByteToMessageDecoder {
             return "";
         }
         return new String(copy, 0, index, StandardCharsets.UTF_8.name()).trim();
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        int readerIndex = in.readerIndex();
+        String msg = decode(ctx, in);
+        if (msg != null) {
+            out.add(msg);
+        } else {
+            if (ctx.channel().isActive()) {
+                in.readerIndex(readerIndex);
+            }
+        }
+    }
+
+    private String decode(ChannelHandlerContext ctx, ByteBuf in) {
+        int readableBytes = in.readableBytes();
+        if (readableBytes == 0) {
+            return null;
+        }
+        byte[] message = new byte[readableBytes];
+        in.readBytes(message);
+        if (message[readableBytes - 1] == BACKSPACE_BYTE) {
+            boolean doubleChar = message.length >= 3 && message[message.length - 3] < 0;
+            ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(
+                    (new String(doubleChar ? BACKSPACE_DOUBLE : BACKSPACE, StandardCharsets.UTF_8)).getBytes()));
+            return null;
+        }
+        for (Object command : EXIT) {
+            if (isEquals(message, (byte[]) command)) {
+                if (ctx.channel().isActive()) {
+                    logger.info("Close channel on exit command: " + Arrays.toString((byte[]) command));
+                    ctx.channel().close();
+                }
+                return null;
+            }
+        }
+        boolean up = endsWith(message, UP);
+        boolean down = endsWith(message, DOWN);
+        if (up || down) {
+            processUpAddDown(ctx, up);
+            return null;
+        }
+        byte[] enter = null;
+        for (Object command : ENTER) {
+            if (endsWith(message, (byte[]) command)) {
+                enter = (byte[]) command;
+                break;
+            }
+        }
+        if (enter == null) {
+            return null;
+        }
+        try {
+            LinkedList<String> history = ctx.channel().attr(HISTORY_LIST_KEY).get();
+            Integer index = ctx.channel().attr(HISTORY_INDEX_KEY).get();
+            ctx.channel().attr(HISTORY_INDEX_KEY).set(null);
+            if (history != null && history.size() > 0 && index != null && index >= 0 && index < history.size()) {
+                String value = history.get(index);
+                if (value != null) {
+                    byte[] b1 = value.getBytes();
+                    byte[] b2 = new byte[b1.length + message.length];
+                    System.arraycopy(b1, 0, b2, 0, b1.length);
+                    System.arraycopy(message, 0, b2, b1.length, message.length);
+                    message = b2;
+                }
+            }
+            String result = toString(message);
+            if (result.trim().length() > 0) {
+                if (history == null) {
+                    history = new LinkedList<>();
+                    ctx.channel().attr(HISTORY_LIST_KEY).set(history);
+                }
+                if (history.isEmpty()) {
+                    history.addLast(result);
+                } else if (!result.equals(history.getLast())) {
+                    history.remove(result);
+                    history.addLast(result);
+                    if (history.size() > 10) {
+                        history.removeFirst();
+                    }
+                }
+            }
+            return result;
+        } catch (UnsupportedEncodingException e) {
+            if (logger.isWarnEnabled()) {
+                logger.warn("UnsupportedEncodingException" + e);
+            }
+            return null;
+        }
     }
 }

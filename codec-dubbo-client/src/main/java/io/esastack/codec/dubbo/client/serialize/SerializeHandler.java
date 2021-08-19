@@ -16,11 +16,11 @@
 package io.esastack.codec.dubbo.client.serialize;
 
 import esa.commons.concurrent.ThreadFactories;
-import io.esastack.codec.dubbo.client.ResponseCallbackWithDeserialization;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.common.ResponseCallback;
+import io.esastack.codec.common.constant.Constants;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +43,15 @@ public class SerializeHandler {
 
     private final ThreadPoolExecutor executor;
 
+    private SerializeHandler() {
+        this.executor = new ThreadPoolExecutor(POOL_SIZE,
+                POOL_SIZE,
+                Integer.MAX_VALUE,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(MAX_QUEUE_SIZE),
+                ThreadFactories.namedThreadFactory("dubboLiteClient-serialize"));
+    }
+
     public static SerializeHandler get() {
         if (instance == null) {
             synchronized (SerializeHandler.class) {
@@ -54,20 +63,11 @@ public class SerializeHandler {
         return instance;
     }
 
-    private SerializeHandler() {
-        this.executor = new ThreadPoolExecutor(POOL_SIZE,
-                POOL_SIZE,
-                Integer.MAX_VALUE,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(MAX_QUEUE_SIZE),
-                ThreadFactories.namedThreadFactory("dubboLiteClient-serialize"));
-    }
-
     /**
      * if the thread queue is full, do the deserialization in IO THREAD
      */
     public void deserialize(final DubboMessage response,
-                            final ResponseCallbackWithDeserialization callback,
+                            final ResponseCallback callback,
                             final Map<String, String> ttfbAttachments) {
         response.retain();
         if (ENABLE_SERIALIZE_POOL) {
@@ -82,14 +82,14 @@ public class SerializeHandler {
     }
 
     private void doDeserialize(final DubboMessage response,
-                               final ResponseCallbackWithDeserialization callback,
+                               final ResponseCallback callback,
                                final Map<String, String> ttfbAttachments) {
         try {
             final long startAt = System.currentTimeMillis();
-            ttfbAttachments.put(DubboConstants.TRACE.TIME_OF_RSP_DESERIALIZE_BEGIN_KEY, startAt + "");
-            final RpcResult rpcResult = ClientCodecHelper.toRpcResult(
+            ttfbAttachments.put(Constants.TRACE.TIME_OF_RSP_DESERIALIZE_BEGIN_KEY, startAt + "");
+            final DubboRpcResult rpcResult = ClientCodecHelper.toRpcResult(
                     response, callback.getReturnType(), callback.getGenericReturnType(), ttfbAttachments);
-            rpcResult.setAttachment(DubboConstants.TRACE.TIME_OF_RSP_DESERIALIZE_COST_KEY,
+            rpcResult.setAttachment(Constants.TRACE.TIME_OF_RSP_DESERIALIZE_COST_KEY,
                     String.valueOf(System.currentTimeMillis() - startAt));
             callback.onResponse(rpcResult);
         } catch (Throwable t) {

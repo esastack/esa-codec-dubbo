@@ -15,8 +15,9 @@
  */
 package io.esastack.codec.dubbo.core.codec;
 
-import io.esastack.codec.dubbo.core.exception.UnknownProtocolException;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.common.constant.Constants;
+import io.esastack.codec.common.exception.UnknownProtocolException;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -64,7 +65,7 @@ public class DubboMessageDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         //Dubbo协议收包完成事件时间 纳秒
         Channel channel = ctx.channel();
-        channel.attr(DubboConstants.DECODE_TTFB_COMPLETE_KEY).set(System.currentTimeMillis());
+        channel.attr(Constants.DECODE_TTFB_COMPLETE_KEY).set(System.currentTimeMillis());
         return dubboMessage;
     }
 

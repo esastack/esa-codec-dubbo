@@ -15,8 +15,9 @@
  */
 package io.esastack.codec.dubbo.client;
 
+import io.esastack.codec.common.connection.NettyConnectionConfig;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.netty.channel.ChannelOption;
@@ -41,22 +42,25 @@ public class DubboSDKClientTests {
         channelOptions.put(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
         channelOptions.put(ChannelOption.SO_RCVBUF, 1024);
         channelOptions.put(ChannelOption.SO_SNDBUF, 1024);
-        DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder =
-                DubboClientBuilder.MultiplexPoolBuilder.newBuilder()
+        NettyConnectionConfig.MultiplexPoolBuilder multiplexPoolBuilder =
+                NettyConnectionConfig.MultiplexPoolBuilder.newBuilder()
                         .setInit(true)
                         .setMaxRetryTimes(3)
                         .setBlockCreateWhenInit(true)
                         .setWaitCreateWhenLastTryAcquire(true)
                         .setMaxPoolSize(10);
-        DubboClientBuilder clientConfig = new DubboClientBuilder()
+        NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
                 .setHost("localhost")
                 .setPort(20880)
                 .setMultiplexPoolBuilder(multiplexPoolBuilder)
-                .setReadTimeout(4000)
                 .setChannelOptions(channelOptions)
-                .setConnectTimeout(3000)
+                .setConnectTimeout(3000);
+        DubboClientBuilder builder = new DubboClientBuilder()
+                .setConnectionConfig(connectionConfig)
+                .setReadTimeout(4000)
                 .setWriteTimeout(3000);
-        dubboNettyClient = new NettyDubboClient(clientConfig);
+
+        dubboNettyClient = new NettyDubboClient(builder);
     }
 
     public static void main(String[] args) throws Exception {
@@ -82,10 +86,10 @@ public class DubboSDKClientTests {
                         RpcInvocation invocation = buildRpcInvocation();
                         DubboMessage dubboRequest = ClientCodecHelper.toDubboMessage(invocation);
 
-                        CompletableFuture<RpcResult> responseFuture = dubboNettyClient.sendRequest(dubboRequest,
-                                        invocation.getReturnType());
+                        CompletableFuture<DubboRpcResult> responseFuture = dubboNettyClient.sendRequest(dubboRequest,
+                                invocation.getReturnType());
 
-                        RpcResult rpcResult = responseFuture.get();
+                        DubboRpcResult rpcResult = responseFuture.get();
                         if (rpcResult.getStatus() != 20) {
                             errCount.incrementAndGet();
                         }

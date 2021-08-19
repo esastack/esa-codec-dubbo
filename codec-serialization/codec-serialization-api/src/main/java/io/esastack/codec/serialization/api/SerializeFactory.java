@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SerializeFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(SerializeFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SerializeFactory.class);
 
     private static final Map<Byte, Serialization> ID_CACHE = new ConcurrentHashMap<>();
 
@@ -33,16 +33,31 @@ public class SerializeFactory {
 
     static {
         try {
-            List<Serialization> serializations = SpiLoader.cached(Serialization.class).getAll();
-            for (Serialization serialization : serializations) {
-                ID_CACHE.put(serialization.getSeriTypeId(), serialization);
-                NAME_CACHE.put(serialization.getSeriName(), serialization);
-                logger.info(String.format("Loaded serialization: type = %d, name = %s from SPI",
-                        serialization.getSeriTypeId(), serialization.getSeriName()));
-            }
+            init(SpiLoader.cached(Serialization.class).getAll());
         } catch (Throwable ex) {
-            logger.error("Failed to load serializations from SPI", ex);
+            try {
+                init(SpiLoader.cached(Serialization.class).getAll(true));
+            } catch (Throwable e) {
+                LOGGER.error("Failed to load serializations from SPI", ex);
+            }
         }
+    }
+
+    private static void init(final List<Serialization> serializations) {
+        for (Serialization serialization : serializations) {
+            ID_CACHE.put(serialization.getSeriTypeId(), serialization);
+            NAME_CACHE.put(serialization.getSeriName(), serialization);
+            LOGGER.info(String.format("Loaded serialization: type = %d, name = %s from SPI",
+                    serialization.getSeriTypeId(), serialization.getSeriName()));
+        }
+    }
+
+    public static Map<Byte, Serialization> getAllByType() {
+        return ID_CACHE;
+    }
+
+    public static Map<String, Serialization> getAllByName() {
+        return NAME_CACHE;
     }
 
     public static Serialization getSerialization(byte seriType) {

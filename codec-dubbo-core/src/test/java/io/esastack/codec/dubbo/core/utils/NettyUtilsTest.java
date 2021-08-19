@@ -15,8 +15,10 @@
  */
 package io.esastack.codec.dubbo.core.utils;
 
-import io.esastack.codec.dubbo.core.exception.SerializationException;
-import io.esastack.codec.dubbo.core.exception.UnknownProtocolException;
+import io.esastack.codec.common.constant.Constants;
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.common.exception.UnknownProtocolException;
+import io.esastack.codec.common.utils.NettyUtils;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.api.SerializeFactory;
@@ -73,10 +75,10 @@ public class NettyUtilsTest {
     public void testTtfb() {
         EmbeddedChannel channel = new EmbeddedChannel();
 
-        Attribute<Long> ttfbAttr = channel.attr(DubboConstants.DECODE_TTFB_KEY);
+        Attribute<Long> ttfbAttr = channel.attr(Constants.DECODE_TTFB_KEY);
         ttfbAttr.set(System.currentTimeMillis());
 
-        Attribute<Long> ttfbCompleteAttr = channel.attr(DubboConstants.DECODE_TTFB_COMPLETE_KEY);
+        Attribute<Long> ttfbCompleteAttr = channel.attr(Constants.DECODE_TTFB_COMPLETE_KEY);
         ttfbCompleteAttr.set(System.currentTimeMillis() + 10);
 
         Map<String, String> attachments = new HashMap<>();
@@ -84,9 +86,9 @@ public class NettyUtilsTest {
 
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(channel);
 
-        Assert.assertEquals(String.valueOf(ttfbAttr.get()), ttfbAttachments.get(DubboConstants.TRACE.TTFB_KEY));
+        Assert.assertEquals(String.valueOf(ttfbAttr.get()), ttfbAttachments.get(Constants.TRACE.TTFB_KEY));
         Assert.assertEquals(String.valueOf(ttfbCompleteAttr.get()),
-                ttfbAttachments.get(DubboConstants.TRACE.TTFB_COMPLETE_KEY));
+                ttfbAttachments.get(Constants.TRACE.TTFB_COMPLETE_KEY));
 
     }
 

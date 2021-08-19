@@ -29,14 +29,12 @@ public interface MultiplexPool<T> {
      * until {@link DefaultMultiplexPool.Builder#getMaxWaitCreateTime()}.
      * So the {@link PooledObjectFactory} create method cannot take too long time.
      * It's better to have a {@code maxCreateTime}.
-     *
      */
     CompletableFuture<T> acquire();
 
     /**
      * estimate whether there is element ready for acquiring at current time
      * the result is just a estimation, will soon be expired
-     *
      */
     boolean canAcquire();
 
@@ -47,7 +45,6 @@ public interface MultiplexPool<T> {
 
     /**
      * close the given {@code element}, even if the {@code element} doesn't belong to the pool.
-     *
      */
     void close(T element);
 }

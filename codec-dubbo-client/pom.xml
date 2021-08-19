@@ -20,7 +20,7 @@
     <parent>
         <groupId>io.esastack</groupId>
         <artifactId>codec-dubbo</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -32,19 +32,11 @@
             <artifactId>codec-dubbo-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>io.esastack</groupId>
-            <artifactId>codec-commons-pool</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>io.esastack</groupId>
             <artifactId>codec-dubbo-server</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 </project>

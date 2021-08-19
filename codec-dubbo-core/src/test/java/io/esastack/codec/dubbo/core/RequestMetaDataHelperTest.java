@@ -17,7 +17,6 @@ package io.esastack.codec.dubbo.core;
 
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.serialization.api.SerializeConstants;
 import org.junit.Assert;
 import org.junit.Test;

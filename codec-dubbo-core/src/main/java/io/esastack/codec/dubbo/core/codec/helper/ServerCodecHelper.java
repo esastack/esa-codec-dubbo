@@ -16,12 +16,12 @@
 package io.esastack.codec.dubbo.core.codec.helper;
 
 import esa.commons.io.IOUtils;
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.dubbo.core.utils.ReflectUtils;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
@@ -41,11 +41,11 @@ public class ServerCodecHelper {
 
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
 
-    public static DubboMessage toDubboMessage(RpcResult rpcResult) throws SerializationException {
+    public static DubboMessage toDubboMessage(DubboRpcResult rpcResult) throws SerializationException {
         return toDubboMessage(rpcResult, UnpooledByteBufAllocator.DEFAULT);
     }
 
-    public static DubboMessage toDubboMessage(RpcResult rpcResult,
+    public static DubboMessage toDubboMessage(DubboRpcResult rpcResult,
                                               ByteBufAllocator alloc) throws SerializationException {
         DubboMessage response = new DubboMessage();
 
@@ -74,23 +74,23 @@ public class ServerCodecHelper {
                 final boolean emptyAttachments = attachments == null || attachments.isEmpty();
                 if (rpcResult.getValue() == null) {
                     if (emptyAttachments) {
-                        out.writeByte(RpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE);
+                        out.writeByte(DubboRpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE);
                     } else {
-                        out.writeByte(RpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS);
+                        out.writeByte(DubboRpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS);
                         out.writeMap(attachments);
                     }
                 } else {
                     if (emptyAttachments) {
-                        out.writeByte(RpcResult.RESPONSE_FLAG.RESPONSE_VALUE);
+                        out.writeByte(DubboRpcResult.RESPONSE_FLAG.RESPONSE_VALUE);
                         out.writeObject(rpcResult.getValue());
                     } else {
-                        out.writeByte(RpcResult.RESPONSE_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS);
+                        out.writeByte(DubboRpcResult.RESPONSE_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS);
                         out.writeObject(rpcResult.getValue());
                         out.writeMap(attachments);
                     }
                 }
             } else {
-                out.writeByte(RpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION);
+                out.writeByte(DubboRpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION);
                 out.writeThrowable(rpcResult.getException());
             }
             out.flush();

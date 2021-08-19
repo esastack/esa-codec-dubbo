@@ -23,7 +23,7 @@ public interface TelnetHandler {
     /**
      * telnet
      *
-     * @param ctx Netty ChannelHandlerContext
+     * @param ctx     Netty ChannelHandlerContext
      * @param message command
      * @return result
      */

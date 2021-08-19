@@ -17,13 +17,13 @@ package io.esastack.codec.dubbo.server.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import io.esastack.codec.common.server.NettyServerConfig;
+import io.esastack.codec.common.utils.NettyUtils;
 import io.esastack.codec.dubbo.core.codec.DubboMessageDecoder;
 import io.esastack.codec.dubbo.core.codec.DubboMessageEncoder;
 import io.esastack.codec.dubbo.core.codec.TTFBLengthFieldBasedFrameDecoder;
-import io.esastack.codec.dubbo.core.utils.NettyUtils;
 import io.esastack.codec.dubbo.server.DubboServerBuilder;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.ssl.SslContext;
@@ -38,28 +38,29 @@ import java.util.List;
  */
 public class TlsDetectHandler extends ByteToMessageDecoder {
 
-    private static final Logger logger = LoggerFactory.getLogger(TlsDetectHandler.class);
-
-    private final DubboServerBuilder builder;
+    private static final Logger LOGGER = LoggerFactory.getLogger(TlsDetectHandler.class);
 
     private final SslContext sslContext;
+    private final DubboServerBuilder builder;
+    private final NettyServerConfig serverConfig;
 
     public TlsDetectHandler(DubboServerBuilder builder) {
         this(builder, null);
     }
 
     public TlsDetectHandler(DubboServerBuilder builder, SslContext sslContext) {
-        this.builder = builder;
         this.sslContext = sslContext;
+        this.builder = builder;
+        this.serverConfig = builder.getServerConfig();
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Received connection from client({})", NettyUtils.parseRemoteAddress(ctx.channel()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Received connection from client({})", NettyUtils.parseRemoteAddress(ctx.channel()));
             ctx.channel().closeFuture().addListener(future -> {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Disconnected from client({})", NettyUtils.parseRemoteAddress(ctx.channel()));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Disconnected from client({})", NettyUtils.parseRemoteAddress(ctx.channel()));
                 }
             });
         }
@@ -98,8 +99,7 @@ public class TlsDetectHandler extends ByteToMessageDecoder {
      */
     private void addSSLHandler(final ChannelHandlerContext ctx) {
         SSLEngine engine = sslContext.newEngine(ctx.alloc());
-
-        String[] enabledProtocols = builder.getDubboSslContextBuilder().getEnabledProtocols();
+        String[] enabledProtocols = serverConfig.getSslContextBuilder().getEnabledProtocols();
         if (enabledProtocols != null && enabledProtocols.length > 0) {
             engine.setEnabledProtocols(enabledProtocols);
         }
@@ -107,16 +107,16 @@ public class TlsDetectHandler extends ByteToMessageDecoder {
         SslHandler sslHandler = new SslHandler(engine);
 
         //设置握手超时时间
-        sslHandler.setHandshakeTimeoutMillis(builder.getDubboSslContextBuilder().getHandshakeTimeoutMillis());
+        sslHandler.setHandshakeTimeoutMillis(serverConfig.getSslContextBuilder().getHandshakeTimeoutMillis());
 
         ctx.pipeline().addLast(sslHandler);
     }
 
     private void addDubboHandler(final ChannelHandlerContext ctx) {
         DubboServerNettyHandler dubboServerNettyHandler = new DubboServerNettyHandler(builder.getBizHandler());
-        ctx.pipeline().addLast("IdleStateHandler", new IdleStateHandler(0, 0, builder.getHeartbeatTimeoutSeconds()))
-                .addLast(builder.getChannelHandlers().toArray(new ChannelHandler[0]))
-                .addLast(new TTFBLengthFieldBasedFrameDecoder(builder.getPayload(), 12, 4, 0, 0))
+        ctx.pipeline()
+                .addLast("IdleStateHandler", new IdleStateHandler(0, 0, serverConfig.getHeartbeatTimeoutSeconds()))
+                .addLast(new TTFBLengthFieldBasedFrameDecoder(serverConfig.getPayload(), 12, 4, 0, 0))
                 .addLast(new DubboMessageDecoder())
                 .addLast(new DubboMessageEncoder())
                 .addLast(dubboServerNettyHandler);
@@ -124,7 +124,7 @@ public class TlsDetectHandler extends ByteToMessageDecoder {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        logger.warn("Exception occurred in connection: remote[" +
+        LOGGER.warn("Exception occurred in connection: remote[" +
                 NettyUtils.parseRemoteAddress(ctx.channel()) + "]", cause);
         ctx.channel().close();
     }

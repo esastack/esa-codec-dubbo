@@ -49,7 +49,7 @@ public class TelnetTelnetDetectHandlerTest {
         byte[] msg = new byte[2];
         assertEquals(2, ((ByteBuf) outboundMessage).readableBytes());
         ((ByteBuf) outboundMessage).readBytes(msg);
-        assertArrayEquals(new byte[] {32, 8}, msg);
+        assertArrayEquals(new byte[]{32, 8}, msg);
         // 写入正常指令
         assertTrue(embeddedChannelRead.writeInbound(Unpooled.wrappedBuffer(" -l\r\n".getBytes())));
         assertEquals("ls -l", embeddedChannelRead.readInbound());

@@ -17,7 +17,7 @@ package io.esastack.codec.dubbo.core.codec;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandlerContext;

@@ -274,7 +274,7 @@ public final class ReflectUtils {
         }
         ConcurrentMap<String, Class<?>[]> cacheMap = PARAMETER_TYPE_CACHE.get(classLoader);
         Class<?>[] parameterTypes = cacheMap.get(desc);
-        if (parameterTypes ==  null) {
+        if (parameterTypes == null) {
             List<Class<?>> cs = new ArrayList<>();
             Matcher m = DESC_PATTERN.matcher(desc);
             while (m.find()) {

@@ -29,7 +29,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static io.esastack.codec.dubbo.core.utils.DubboConstants.*;
+import static io.esastack.codec.dubbo.core.DubboConstants.*;
 
 /**
  * Telnet protocol detect handler
