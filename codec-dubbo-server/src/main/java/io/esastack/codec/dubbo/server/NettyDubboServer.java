@@ -47,7 +47,7 @@ public class NettyDubboServer extends NettyServer {
     protected ServerConnectionInitializer createConnectionInitializer(final NettyServerConfig serverConfig) {
         final SslContext sslContext;
         try {
-            sslContext = createSslContext();
+            sslContext = createSslContext(serverConfig);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to create ssl context.", e);
         }

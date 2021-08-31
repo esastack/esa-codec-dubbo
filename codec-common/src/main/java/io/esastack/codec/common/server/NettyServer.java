@@ -111,7 +111,7 @@ public abstract class NettyServer {
                 serverConfig.getPort() + "] closed!***************************************");
     }
 
-    protected SslContext createSslContext() throws IOException {
+    protected SslContext createSslContext(final NettyServerConfig serverConfig) throws IOException {
         if (serverConfig.getSslContextBuilder() == null) {
             LOGGER.info("Dubbo server does not enable SSL encryption");
             return null;

@@ -74,7 +74,7 @@ public class NettyConenctionTest {
         channel.connect();
         Assert.assertTrue(channel.isActive());
         Assert.assertTrue(channel.isWritable());
-        Assert.assertTrue(channel.getDubboCallbackMap().isEmpty());
+        Assert.assertTrue(channel.getCallbackMap().isEmpty());
         Assert.assertTrue(channel.getName().startsWith("connect"));
         Assert.assertEquals(0, channel.getRequestIdAtomic().get());
     }

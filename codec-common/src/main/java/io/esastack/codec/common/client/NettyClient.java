@@ -77,7 +77,7 @@ public abstract class NettyClient {
 
         //发送失败
         final String errMsg = StringUtils.concat("write request to ", connection.getName(), " error.");
-        connection.getDubboCallbackMap().remove(requestId);
+        connection.getCallbackMap().remove(requestId);
         try {
             callback.onWriteToNetwork(false, channelFuture.cause().toString());
         } finally {

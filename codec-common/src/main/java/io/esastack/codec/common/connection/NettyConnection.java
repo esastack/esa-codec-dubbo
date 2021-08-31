@@ -199,7 +199,7 @@ public class NettyConnection {
         return this.requestIdAtomic;
     }
 
-    public Map<Long, ResponseCallback> getDubboCallbackMap() {
+    public Map<Long, ResponseCallback> getCallbackMap() {
         return this.callbackMap;
     }
 

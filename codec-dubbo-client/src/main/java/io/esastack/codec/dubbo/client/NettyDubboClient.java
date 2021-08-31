@@ -334,7 +334,7 @@ public class NettyDubboClient extends NettyClient implements DubboClient {
                 callback.onError(new RequestTimeoutException("Client sends data timeout: " + timeout + " ms."));
             }
         } else {
-            final Map<Long, ResponseCallback> callbackMap = connection.getDubboCallbackMap();
+            final Map<Long, ResponseCallback> callbackMap = connection.getCallbackMap();
             callbackMap.put(requestId, callback);
             final ChannelFuture channelFuture = connection.writeAndFlush(request);
             channelFuture.addListener((ChannelFuture future) ->
