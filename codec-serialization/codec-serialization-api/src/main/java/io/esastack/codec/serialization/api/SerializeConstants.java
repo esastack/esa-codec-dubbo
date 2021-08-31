@@ -27,4 +27,5 @@ public interface SerializeConstants {
     byte PBMIX_SERIALIZATION_ID = 17;
 
     byte PROTOBUF_SERIALIZATION_ID = 22;
+    byte PROTOBUF_SINGLE_SERIALIZATION_ID = 44;
 }
