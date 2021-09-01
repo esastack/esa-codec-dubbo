@@ -15,13 +15,14 @@
  */
 package io.esastack.codec.dubbo.server;
 
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.common.server.NettyServerConfig;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.DubboMessageEncoder;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.esastack.codec.dubbo.server.handler.DubboServerBizHandler;
 import io.esastack.codec.dubbo.server.handler.TelnetDetectHandler;
@@ -49,13 +50,16 @@ import static org.junit.Assert.*;
 
 public class TlsDetectHandlerTest {
 
-    static DubboServerBuilder serverBuilder = new DubboServerBuilder();
+    static DubboServerBuilder serverBuilder;
+
     static {
-        serverBuilder.setPayload(16 * 1024 * 1024);
-        serverBuilder.setPort(20888)
-                .setSoBacklogSize(1025)
-                .setBindIp("localhost")
-                .setHeartbeatTimeoutSeconds(66)
+        serverBuilder = NettyDubboServer.newBuilder()
+                .setServerConfig(new NettyServerConfig()
+                        .setPayload(16 * 1024 * 1024)
+                        .setPort(20888)
+                        .setSoBacklogSize(1025)
+                        .setBindIp("localhost")
+                        .setHeartbeatTimeoutSeconds(66))
                 .setBizHandler(new DubboServerBizHandler() {
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -67,7 +71,7 @@ public class TlsDetectHandlerTest {
                         }
                         String str = "hello  world from client " + invocation.getRequestId() + " " +
                                 invocation.getSeriType();
-                        RpcResult rpcResult = RpcResult.success(invocation.getRequestId(),
+                        DubboRpcResult rpcResult = DubboRpcResult.success(invocation.getRequestId(),
                                 invocation.getSeriType(), str);
                         DubboMessage dubboMessage = null;
                         try {
@@ -99,7 +103,7 @@ public class TlsDetectHandlerTest {
         rpcInvocation.setSeriType(SerializeConstants.HESSIAN2_SERIALIZATION_ID);
         DubboMessage mockRequestDubboMesage = ClientCodecHelper.toDubboMessage(rpcInvocation);
         List<ChannelHandler> channelHandlers = new ArrayList<>();
-        serverBuilder.setChannelHandlers(channelHandlers);
+        serverBuilder.getServerConfig().setChannelHandlers(channelHandlers);
         EmbeddedChannel embeddedChannelWrite = new EmbeddedChannel(new DubboMessageEncoder());
         Assert.assertTrue(embeddedChannelWrite.writeOutbound(mockRequestDubboMesage));
         Assert.assertTrue(embeddedChannelWrite.finish());

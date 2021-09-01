@@ -1,8 +1,10 @@
 package io.esastack.codec.dubbo.client;
 
 import esa.commons.StringUtils;
+import io.esastack.codec.common.connection.NettyConnectionConfig;
+import io.esastack.codec.common.connection.NettyConnectionConfig.MultiplexPoolBuilder;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.netty.channel.ChannelOption;
@@ -19,13 +21,14 @@ public class DubboSDKClient {
         channelOptions.put(ChannelOption.SO_KEEPALIVE, true);
         channelOptions.put(ChannelOption.TCP_NODELAY, true);
         channelOptions.put(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-        final DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder =
-                DubboClientBuilder.MultiplexPoolBuilder.newBuilder();
-        final DubboClientBuilder builder = new DubboClientBuilder()
+        final MultiplexPoolBuilder multiplexPoolBuilder =
+                MultiplexPoolBuilder.newBuilder();
+        final NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
                 .setMultiplexPoolBuilder(multiplexPoolBuilder)
                 .setChannelOptions(channelOptions)
                 .setHost("localhost")
                 .setPort(20880);
+        final DubboClientBuilder builder = new DubboClientBuilder().setConnectionConfig(connectionConfig);
         NettyDubboClient nettyDubboClient = new NettyDubboClient(builder);
 
         // build request
@@ -42,7 +45,7 @@ public class DubboSDKClient {
         DubboMessage request = ClientCodecHelper.toDubboMessage(rpcInvocation);
 
         // Send the request and handle the return value
-        CompletableFuture<RpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
+        CompletableFuture<DubboRpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
 
         responseFuture.whenComplete((r, t) -> {
             if (t != null || r.getException() != null || StringUtils.isNotEmpty(r.getErrorMessage())) {

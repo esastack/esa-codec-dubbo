@@ -17,8 +17,9 @@ package io.esastack.codec.dubbo.core.codec;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.core.exception.UnknownProtocolException;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
+import io.esastack.codec.common.constant.Constants;
+import io.esastack.codec.common.exception.UnknownProtocolException;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -77,7 +78,7 @@ public class TTFBLengthFieldBasedFrameDecoder extends LengthFieldBasedFrameDecod
 
         //Dubbo协议收到首字节后，保证每一次请求只执行一次标记
         if (!inDecodeProcess && frame.readableBytes() >= DubboConstants.MAGIC_LENGTH && isDubboMagic(frame)) {
-            ctx.channel().attr(DubboConstants.DECODE_TTFB_KEY).set(System.currentTimeMillis());
+            ctx.channel().attr(Constants.DECODE_TTFB_KEY).set(System.currentTimeMillis());
             inDecodeProcess = true;
         }
 

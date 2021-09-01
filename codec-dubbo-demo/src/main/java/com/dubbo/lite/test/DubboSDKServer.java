@@ -18,11 +18,12 @@ package com.dubbo.lite.test;
 import esa.commons.concurrent.ThreadPools;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.common.server.NettyServerConfig;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
 import io.esastack.codec.dubbo.server.DubboServerBuilder;
 import io.esastack.codec.dubbo.server.NettyDubboServer;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
@@ -46,7 +47,7 @@ public class DubboSDKServer {
     public static void main(String[] args) {
         // build server
         DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
-                .setPort(20880)
+                .setServerConfig(new NettyServerConfig().setPort(20880))
                 .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -70,7 +71,7 @@ public class DubboSDKServer {
                             try {
                                 // build response
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
-                                        RpcResult.success(
+                                        DubboRpcResult.success(
                                                 invocation.getRequestId(),
                                                 invocation.getSeriType(),
                                                 response),

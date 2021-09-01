@@ -267,26 +267,6 @@ public class MultiplexPoolTests {
         }
     }
 
-    private class ValidateFalsePoolFactory implements PooledObjectFactory<String> {
-
-        private AtomicInteger index = new AtomicInteger();
-
-        @Override
-        public CompletableFuture<String> create() {
-            return CompletableFuture.completedFuture("create-" + index.getAndIncrement());
-        }
-
-        @Override
-        public CompletableFuture<Void> destroy(String object) {
-            return null;
-        }
-
-        @Override
-        public Boolean validate(String object) {
-            return false;
-        }
-    }
-
     private static class Worker implements Runnable {
 
         private CountDownLatch latch;
@@ -312,6 +292,26 @@ public class MultiplexPoolTests {
                 e.printStackTrace();
             }
             latch.countDown();
+        }
+    }
+
+    private class ValidateFalsePoolFactory implements PooledObjectFactory<String> {
+
+        private AtomicInteger index = new AtomicInteger();
+
+        @Override
+        public CompletableFuture<String> create() {
+            return CompletableFuture.completedFuture("create-" + index.getAndIncrement());
+        }
+
+        @Override
+        public CompletableFuture<Void> destroy(String object) {
+            return null;
+        }
+
+        @Override
+        public Boolean validate(String object) {
+            return false;
         }
     }
 }

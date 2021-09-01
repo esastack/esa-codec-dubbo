@@ -17,10 +17,10 @@ package io.esastack.codec.dubbo.server.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import io.esastack.codec.common.utils.NettyUtils;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
-import io.esastack.codec.dubbo.core.utils.NettyUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 

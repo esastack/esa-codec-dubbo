@@ -16,11 +16,12 @@
 package io.esastack.codec.dubbo.server;
 
 import esa.commons.concurrent.ThreadPools;
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.common.server.NettyServerConfig;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
 import io.esastack.codec.dubbo.server.handler.BaseServerBizHandlerAdapter;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -52,9 +53,10 @@ public class NettyDubboServerTest {
         childOptions.put(ChannelOption.SO_KEEPALIVE, true);
         childOptions.put(ChannelOption.TCP_NODELAY, true);
         NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
-                .setPort(20888)
-                .setChildChannelOptions(childOptions)
-                .setChannelOptions(options)
+                .setServerConfig(new NettyServerConfig()
+                        .setPort(20888)
+                        .setChildChannelOptions(childOptions)
+                        .setChannelOptions(options))
                 .setBizHandler(new BaseServerBizHandlerAdapter() {
                     @Override
                     public void process0(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -63,7 +65,7 @@ public class NettyDubboServerTest {
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
                             fail();
-                            RpcResult rpcResult = RpcResult.error(
+                            DubboRpcResult rpcResult = DubboRpcResult.error(
                                     request.getHeader().getRequestId(), request.getHeader().getSeriType(), e);
                             DubboMessage errorResponse = null;
                             try {
@@ -78,7 +80,7 @@ public class NettyDubboServerTest {
                         workerThreadPool.execute(() -> {
                             String str = "hello  world from client " + invocation.getRequestId() + " " +
                                     invocation.getSeriType();
-                            RpcResult rpcResult = RpcResult.success(invocation.getRequestId(),
+                            DubboRpcResult rpcResult = DubboRpcResult.success(invocation.getRequestId(),
                                     invocation.getSeriType(), str);
                             DubboMessage dubboMessage = null;
                             try {

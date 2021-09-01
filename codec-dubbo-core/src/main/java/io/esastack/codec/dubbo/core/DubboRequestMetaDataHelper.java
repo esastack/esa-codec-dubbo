@@ -16,8 +16,8 @@
 package io.esastack.codec.dubbo.core;
 
 import esa.commons.io.IOUtils;
+import io.esastack.codec.common.exception.SerializationException;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
 import io.esastack.codec.dubbo.core.utils.ReflectUtils;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.Serialization;

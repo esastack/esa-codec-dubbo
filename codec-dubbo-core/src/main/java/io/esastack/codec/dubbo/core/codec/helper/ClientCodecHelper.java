@@ -16,12 +16,12 @@
 package io.esastack.codec.dubbo.core.codec.helper;
 
 import esa.commons.io.IOUtils;
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.dubbo.core.DubboConstants;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.dubbo.core.utils.ReflectUtils;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
@@ -91,32 +91,32 @@ public class ClientCodecHelper {
         return request;
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType) {
+    public static DubboRpcResult toRpcResult(final DubboMessage response,
+                                             final Class<?> returnType) {
         return toRpcResult(response, returnType, returnType, null);
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType) {
+    public static DubboRpcResult toRpcResult(final DubboMessage response,
+                                             final Class<?> returnType,
+                                             final Type genericReturnType) {
         return toRpcResult(response, returnType, genericReturnType, null);
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
-                                        final Map<String, String> attachments) {
+    public static DubboRpcResult toRpcResult(final DubboMessage response,
+                                             final Class<?> returnType,
+                                             final Map<String, String> attachments) {
         return toRpcResult(response, returnType, returnType, attachments);
     }
 
-    public static RpcResult toRpcResult(final DubboMessage response,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType,
-                                        final Map<String, String> attachments) {
+    public static DubboRpcResult toRpcResult(final DubboMessage response,
+                                             final Class<?> returnType,
+                                             final Type genericReturnType,
+                                             final Map<String, String> attachments) {
         if (response == null || response.getHeader() == null) {
             return null;
         }
 
-        RpcResult rpcResult = new RpcResult();
+        DubboRpcResult rpcResult = new DubboRpcResult();
         rpcResult.setSeriType(response.getHeader().getSeriType());
         rpcResult.setRequestId(response.getHeader().getRequestId());
         rpcResult.setStatus(response.getHeader().getStatus());
@@ -154,21 +154,21 @@ public class ClientCodecHelper {
         return rpcResult;
     }
 
-    public static RpcResult toRpcResult(final DubboHeader header,
-                                        final byte[] body,
-                                        final Class<?> returnType) {
+    public static DubboRpcResult toRpcResult(final DubboHeader header,
+                                             final byte[] body,
+                                             final Class<?> returnType) {
         return toRpcResult(header, body, returnType, returnType);
     }
 
-    public static RpcResult toRpcResult(final DubboHeader header,
-                                        final byte[] body,
-                                        final Class<?> returnType,
-                                        final Type genericReturnType) {
+    public static DubboRpcResult toRpcResult(final DubboHeader header,
+                                             final byte[] body,
+                                             final Class<?> returnType,
+                                             final Type genericReturnType) {
         if (header == null || body == null) {
             return null;
         }
 
-        RpcResult rpcResult = new RpcResult();
+        DubboRpcResult rpcResult = new DubboRpcResult();
         rpcResult.setSeriType(header.getSeriType());
         rpcResult.setRequestId(header.getRequestId());
         rpcResult.setStatus(header.getStatus());
@@ -199,28 +199,28 @@ public class ClientCodecHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static void deserialize(final RpcResult rpcResult,
+    private static void deserialize(final DubboRpcResult rpcResult,
                                     final DataInputStream in,
                                     final Class<?> returnType,
                                     final Type genericReturnType) throws Exception {
         byte flag = in.readByte();
         switch (flag) {
-            case RpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE:
                 break;
-            case RpcResult.RESPONSE_FLAG.RESPONSE_VALUE:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_VALUE:
                 rpcResult.setValue(in.readObject(returnType, genericReturnType));
                 break;
-            case RpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION:
                 rpcResult.setException(in.readThrowable());
                 break;
-            case RpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
                 rpcResult.setAttachments(in.readMap());
                 break;
-            case RpcResult.RESPONSE_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS:
                 rpcResult.setValue(in.readObject(returnType, genericReturnType));
                 rpcResult.setAttachments(in.readMap());
                 break;
-            case RpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
+            case DubboRpcResult.RESPONSE_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
                 rpcResult.setException(in.readObject(Throwable.class));
                 rpcResult.setAttachments(in.readMap());
                 break;

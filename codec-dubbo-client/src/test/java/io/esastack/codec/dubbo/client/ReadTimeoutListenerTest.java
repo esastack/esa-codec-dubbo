@@ -1,7 +1,9 @@
 package io.esastack.codec.dubbo.client;
 
-import io.esastack.codec.dubbo.client.exception.ConnectFailedException;
-import io.esastack.codec.dubbo.client.exception.RequestTimeoutException;
+import io.esastack.codec.common.ResponseCallback;
+import io.esastack.codec.common.client.ReadTimeoutListener;
+import io.esastack.codec.common.exception.ConnectFailedException;
+import io.esastack.codec.common.exception.RequestTimeoutException;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.local.LocalChannel;
 import io.netty.util.Timeout;
@@ -18,6 +20,17 @@ public class ReadTimeoutListenerTest {
 
     private final AtomicReference<Throwable> throwable = new AtomicReference<>();
     private final ResponseCallback callback = new ResponseCallback() {
+
+        @Override
+        public boolean deserialized() {
+            return false;
+        }
+
+        @Override
+        public void onResponse(final Object result) {
+
+        }
+
         @Override
         public void onError(Throwable e) {
             throwable.set(e);
