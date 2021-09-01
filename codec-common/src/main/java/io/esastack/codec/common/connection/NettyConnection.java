@@ -179,7 +179,11 @@ public class NettyConnection {
                     ch.pipeline().addLast(sslHandler);
                 }
                 ch.pipeline().addLast(connectionConfig.getChannelHandlers().toArray(new ChannelHandler[0]));
-                connectionConfig.getConnectionInitializer().initialize(ch, connectionName, callbackMap);
+                if (connectionConfig.getConnectionInitializer() != null) {
+                    connectionConfig.getConnectionInitializer().initialize(ch, connectionName, callbackMap);
+                } else {
+                    LOGGER.warn("No connectionInitializer configured for " + connectionName);
+                }
 
                 //打印连接、关闭连接调试信息
                 if (LOGGER.isDebugEnabled()) {
