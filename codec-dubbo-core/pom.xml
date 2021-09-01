@@ -20,7 +20,7 @@
     <parent>
         <groupId>io.esastack</groupId>
         <artifactId>codec-dubbo</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -32,6 +32,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.esastack</groupId>
+            <artifactId>codec-common</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>io.esastack</groupId>
             <artifactId>codec-serialization-hessian2</artifactId>

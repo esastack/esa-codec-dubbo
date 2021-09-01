@@ -15,14 +15,14 @@
  */
 package io.esastack.codec.dubbo.server;
 
+import io.esastack.codec.common.exception.SerializationException;
+import io.esastack.codec.common.utils.NettyUtils;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
-import io.esastack.codec.dubbo.core.utils.NettyUtils;
 import io.esastack.codec.dubbo.server.handler.BaseServerBizHandlerAdapter;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.esastack.codec.dubbo.server.handler.DubboServerNettyHandler;
@@ -76,7 +76,7 @@ public class BaseServerBizHandlerAdapterTest {
                 }
                 String str = "hello  world from client " + invocation.getRequestId() + " " +
                         invocation.getSeriType();
-                RpcResult rpcResult = RpcResult.success(invocation.getRequestId(),
+                DubboRpcResult rpcResult = DubboRpcResult.success(invocation.getRequestId(),
                         invocation.getSeriType(), str);
                 DubboMessage dubboMessage = null;
                 try {

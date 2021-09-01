@@ -15,7 +15,7 @@
  */
 package io.esastack.codec.dubbo.core;
 
-import io.esastack.codec.dubbo.core.exception.SerializationException;
+import io.esastack.codec.common.exception.SerializationException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class ExceptionTest {
 
     @Test
     public void testRpcResultError() {
-        RpcResult error = RpcResult.error(1L, (byte) 2, new Throwable());
+        DubboRpcResult error = DubboRpcResult.error(1L, (byte) 2, new Throwable());
         assertNull(error.getValue());
     }
 }

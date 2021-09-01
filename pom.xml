@@ -21,7 +21,7 @@
     <groupId>io.esastack</groupId>
     <artifactId>codec-dubbo</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0</version>
+    <version>0.1.1-SNAPSHOT</version>
 
     <name>codec-dubbo</name>
 
@@ -108,6 +108,7 @@
         <module>codec-dubbo-demo</module>
         <module>codec-commons-pool</module>
         <module>codec-serialization</module>
+        <module>codec-common</module>
     </modules>
 
 
@@ -119,7 +120,7 @@
         <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
         <netty.version>4.1.52.Final</netty.version>
         <netty-tcnative.version>2.0.34.Final</netty-tcnative.version>
-        <esa.commons.vesion>0.1.0</esa.commons.vesion>
+        <esa.commons.vesion>0.1.1</esa.commons.vesion>
         <jackson.version>2.12.0</jackson.version>
     </properties>
 

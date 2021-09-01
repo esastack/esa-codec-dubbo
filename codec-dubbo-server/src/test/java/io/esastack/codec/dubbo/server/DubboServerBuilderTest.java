@@ -15,8 +15,9 @@
  */
 package io.esastack.codec.dubbo.server;
 
+import io.esastack.codec.common.server.NettyServerConfig;
+import io.esastack.codec.common.ssl.SslContextBuilder;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.ssl.DubboSslContextBuilder;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.esastack.codec.dubbo.server.handler.DubboServerBizHandler;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -36,6 +37,7 @@ public class DubboServerBuilderTest {
 
     @Test
     public void testDubboServerBuilder() throws Exception {
+        final int defaultIoThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);
         Map<ChannelOption, Object> options = new HashMap<>(16);
         Map<ChannelOption, Object> childOptions = new HashMap<>(16);
         options.put(ChannelOption.SO_BACKLOG, 2048);
@@ -43,20 +45,19 @@ public class DubboServerBuilderTest {
         childOptions.put(ChannelOption.SO_REUSEADDR, true);
         childOptions.put(ChannelOption.SO_KEEPALIVE, true);
         childOptions.put(ChannelOption.TCP_NODELAY, true);
-        DubboServerBuilder serverBuilder = new DubboServerBuilder();
-        final int defaultIoThreads = Math.min(Runtime.getRuntime().availableProcessors() + 1, 32);
-        //16 M
-        serverBuilder.setPayload(16 * 1024 * 1024);
-        serverBuilder.setPort(20888)
-                .setChannelHandlers(null)
-                .setSoBacklogSize(1025)
-                .setChildChannelOptions(childOptions)
-                .setChannelOptions(options)
-                .setBindIp("localhost")
-                .setHeartbeatTimeoutSeconds(66)
-                .setIoThreads(defaultIoThreads)
-                .setBossThreads(1)
-                .setUnixDomainSocketFile("demo")
+        DubboServerBuilder serverBuilder = NettyDubboServer.newBuilder()
+                .setServerConfig(new NettyServerConfig()
+                        .setPayload(16 * 1024 * 1024)
+                        .setPort(20888)
+                        .setChannelHandlers(null)
+                        .setSoBacklogSize(1025)
+                        .setChildChannelOptions(childOptions)
+                        .setChannelOptions(options)
+                        .setBindIp("localhost")
+                        .setHeartbeatTimeoutSeconds(66)
+                        .setIoThreads(defaultIoThreads)
+                        .setBossThreads(1)
+                        .setUnixDomainSocketFile("demo"))
                 .setBizHandler(new DubboServerBizHandler() {
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -69,22 +70,22 @@ public class DubboServerBuilderTest {
                     }
                 });
 
-        DubboSslContextBuilder dubboSslContextBuilder  = new DubboSslContextBuilder();
-        SelfSignedCertificate ssCertificate  = new SelfSignedCertificate();
+        SslContextBuilder sslContextBuilder = new SslContextBuilder();
+        SelfSignedCertificate ssCertificate = new SelfSignedCertificate();
         File certificateFile = ssCertificate.certificate();
         File privateKeyFile = ssCertificate.privateKey();
         //X509Certificate x509Certificate = ssCertificate.cert();
-        dubboSslContextBuilder.setCertificate(new FileInputStream(certificateFile));
-        dubboSslContextBuilder.setPrivateKey(new FileInputStream(privateKeyFile));
-        serverBuilder.setDubboSslContextBuilder(dubboSslContextBuilder);
+        sslContextBuilder.setCertificate(new FileInputStream(certificateFile));
+        sslContextBuilder.setPrivateKey(new FileInputStream(privateKeyFile));
+        serverBuilder.getServerConfig().setSslContextBuilder(sslContextBuilder);
         //System.out.println(serverBuilder.toString());
-        assertEquals(66, serverBuilder.getHeartbeatTimeoutSeconds());
-        assertEquals(1025, serverBuilder.getSoBacklogSize());
-        assertEquals("localhost", serverBuilder.getBindIp());
-        assertTrue(serverBuilder.getChildChannelOptions().containsKey(ChannelOption.SO_REUSEADDR));
-        assertTrue(serverBuilder.getChannelOptions().containsKey(ChannelOption.SO_BACKLOG));
-        assertEquals(defaultIoThreads, serverBuilder.getIoThreads());
-        assertEquals(1, serverBuilder.getBossThreads());
-        assertEquals("demo", serverBuilder.getUnixDomainSocketFile());
+        assertEquals(66, serverBuilder.getServerConfig().getHeartbeatTimeoutSeconds());
+        assertEquals(1025, serverBuilder.getServerConfig().getSoBacklogSize());
+        assertEquals("localhost", serverBuilder.getServerConfig().getBindIp());
+        assertTrue(serverBuilder.getServerConfig().getChildChannelOptions().containsKey(ChannelOption.SO_REUSEADDR));
+        assertTrue(serverBuilder.getServerConfig().getChannelOptions().containsKey(ChannelOption.SO_BACKLOG));
+        assertEquals(defaultIoThreads, serverBuilder.getServerConfig().getIoThreads());
+        assertEquals(1, serverBuilder.getServerConfig().getBossThreads());
+        assertEquals("demo", serverBuilder.getServerConfig().getUnixDomainSocketFile());
     }
 }

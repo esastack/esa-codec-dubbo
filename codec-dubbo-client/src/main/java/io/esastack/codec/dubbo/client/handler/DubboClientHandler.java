@@ -17,15 +17,13 @@ package io.esastack.codec.dubbo.client.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.dubbo.client.ResponseCallbackWithDeserialization;
-import io.esastack.codec.dubbo.client.ResponseCallback;
-import io.esastack.codec.dubbo.client.ResponseCallbackWithoutDeserialization;
-import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
+import io.esastack.codec.common.ResponseCallback;
+import io.esastack.codec.common.exception.UnknownResponseStatusException;
+import io.esastack.codec.common.utils.NettyUtils;
 import io.esastack.codec.dubbo.client.serialize.SerializeHandler;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.DubboMessageWrapper;
-import io.esastack.codec.dubbo.core.utils.NettyUtils;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -42,17 +40,13 @@ import java.util.Map;
 public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DubboClientHandler.class);
-
+    private static final int MAX_SENT_HEARTBEAT_COUNT = 2;
     private final String connectionName;
-
     private final Map<Long, ResponseCallback> callbackMap;
-
     /**
      * Only read/write in one Thread
      */
     private int sentHeartbeatCount;
-
-    private static final int MAX_SENT_HEARTBEAT_COUNT = 2;
 
     public DubboClientHandler(String connectionName, Map<Long, ResponseCallback> callbackMap) {
         super(); //auto release
@@ -122,17 +116,16 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(ctx.channel());
 
         // Synchronous call, business thread deserialize
-        if (callback instanceof ResponseCallbackWithoutDeserialization) {
+        if (!callback.deserialized()) {
             // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
             response.retain();
             DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
             messageWrapper.addAttachments(ttfbAttachments);
-            ((ResponseCallbackWithoutDeserialization) callback).onResponse(messageWrapper);
+            callback.onResponse(messageWrapper);
             return;
         }
 
-        SerializeHandler.get().deserialize(response,
-                (ResponseCallbackWithDeserialization) callback, ttfbAttachments);
+        SerializeHandler.get().deserialize(response, callback, ttfbAttachments);
     }
 
     @Override

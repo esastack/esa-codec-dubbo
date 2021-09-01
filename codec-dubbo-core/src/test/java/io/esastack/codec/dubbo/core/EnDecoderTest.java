@@ -19,7 +19,6 @@ import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.DubboMessageDecoder;
 import io.esastack.codec.dubbo.core.codec.DubboMessageEncoder;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.serialization.api.SerializeConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedChannel;

@@ -15,6 +15,8 @@
  */
 package io.esastack.codec.dubbo.client;
 
+import io.esastack.codec.common.connection.NettyConnectionConfig;
+import io.esastack.codec.common.connection.NettyConnectionConfig.MultiplexPoolBuilder;
 import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
@@ -32,16 +34,18 @@ public class DubboSDKDomainClientTests {
     static NettyDubboClient dubboNettyClient;
 
     static {
-        DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder =
-                DubboClientBuilder.MultiplexPoolBuilder.newBuilder().setMaxPoolSize(10);
-        DubboClientBuilder clientConfig = new DubboClientBuilder()
+        MultiplexPoolBuilder multiplexPoolBuilder =
+                MultiplexPoolBuilder.newBuilder().setMaxPoolSize(10);
+        NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
                 .setHost("localhost")
                 .setPort(20880)
                 .setMultiplexPoolBuilder(multiplexPoolBuilder)
                 .setConnectTimeout(3000)
-                .setWriteTimeout(3000)
                 .setUnixDomainSocketFile("\0/data/uds/auds.sock");
-        dubboNettyClient = new NettyDubboClient(clientConfig);
+        DubboClientBuilder builder = new DubboClientBuilder()
+                .setConnectionConfig(connectionConfig)
+                .setWriteTimeout(3000);
+        dubboNettyClient = new NettyDubboClient(builder);
     }
 
     public static void main(String[] args) throws Exception {

@@ -62,7 +62,7 @@ public class ProtobufDataInputStream implements DataInputStream {
 
     @Override
     public Throwable readThrowable() throws IOException, ClassNotFoundException {
-        ThrowableValue.Throwable throwableValue = ProtobufUtil.parseFrom(ThrowableValue.Throwable.class, is);
+        final ThrowableValue.Throwable throwableValue = ProtobufUtil.parseFrom(ThrowableValue.Throwable.class, is);
         return new ProtobufWrappedException(throwableValue);
     }
 

@@ -15,8 +15,10 @@
  */
 package io.esastack.codec.dubbo.client;
 
+import io.esastack.codec.common.connection.NettyConnectionConfig;
+import io.esastack.codec.common.connection.NettyConnectionConfig.MultiplexPoolBuilder;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.serialization.api.SerializeConstants;
@@ -58,24 +60,27 @@ public class DubboSDKClientTest {
 
             }
         });
-        DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder =
-                DubboClientBuilder.MultiplexPoolBuilder.newBuilder()
+        MultiplexPoolBuilder multiplexPoolBuilder =
+                MultiplexPoolBuilder.newBuilder()
                         .setInit(true)
                         .setMaxRetryTimes(3)
                         .setBlockCreateWhenInit(true)
                         .setWaitCreateWhenLastTryAcquire(true)
                         .setMaxPoolSize(10);
 
-        DubboClientBuilder clientConfig = new DubboClientBuilder()
+        NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
                 .setHost("localhost")
                 .setPort(20880)
                 .setMultiplexPoolBuilder(multiplexPoolBuilder)
                 .setConnectTimeout(5000)
-                .setReadTimeout(3000)
                 .setChannelOptions(channelOptions)
-                .setChannelHandlers(channelHandlers)
+                .setChannelHandlers(channelHandlers);
+        DubboClientBuilder builder = new DubboClientBuilder()
+                .setConnectionConfig(connectionConfig)
+                .setReadTimeout(3000)
                 .setWriteTimeout(1000);
-        dubboNettyClient = new NettyDubboClient(clientConfig);
+
+        dubboNettyClient = new NettyDubboClient(builder);
 
     }
 
@@ -84,10 +89,10 @@ public class DubboSDKClientTest {
         invocation.setSeriType(SerializeConstants.HESSIAN2_SERIALIZATION_ID);
         DubboMessage dubboRequest = ClientCodecHelper.toDubboMessage(invocation);
 
-        CompletableFuture<RpcResult> responseFuture =
+        CompletableFuture<DubboRpcResult> responseFuture =
                 dubboNettyClient.sendRequest(dubboRequest, invocation.getReturnType());
 
-        RpcResult rpcResult = responseFuture.get(1000, TimeUnit.MILLISECONDS);
+        DubboRpcResult rpcResult = responseFuture.get(1000, TimeUnit.MILLISECONDS);
         System.out.println(rpcResult.getValue());
     }
 

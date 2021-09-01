@@ -36,15 +36,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.serializers.DefaultSerializers;
-import de.javakaffee.kryoserializers.ArraysAsListSerializer;
-import de.javakaffee.kryoserializers.BitSetSerializer;
-import de.javakaffee.kryoserializers.GregorianCalendarSerializer;
-import de.javakaffee.kryoserializers.JdkProxySerializer;
-import de.javakaffee.kryoserializers.RegexSerializer;
-import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
-import de.javakaffee.kryoserializers.URISerializer;
-import de.javakaffee.kryoserializers.UUIDSerializer;
-import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
+import de.javakaffee.kryoserializers.*;
 import io.esastack.codec.serialization.api.SerializableClassRegistry;
 import io.esastack.codec.serialization.kryo.CompatibleKryo;
 

@@ -15,13 +15,14 @@
  */
 package io.esastack.codec.dubbo.client;
 
-import io.esastack.codec.dubbo.client.exception.ConnectFailedException;
-import io.esastack.codec.dubbo.client.exception.ResponseTimeoutException;
+import io.esastack.codec.common.connection.NettyConnectionConfig;
+import io.esastack.codec.common.exception.ConnectFailedException;
+import io.esastack.codec.common.exception.ResponseTimeoutException;
+import io.esastack.codec.common.ssl.SslContextBuilder;
 import io.esastack.codec.dubbo.core.RpcInvocation;
-import io.esastack.codec.dubbo.core.RpcResult;
+import io.esastack.codec.dubbo.core.DubboRpcResult;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
-import io.esastack.codec.dubbo.core.ssl.DubboSslContextBuilder;
 import org.junit.*;
 import org.junit.runners.MethodSorters;
 
@@ -50,12 +51,65 @@ public class NettyDubboClientTest {
         //server.shutdown();
     }
 
+    private static NettyDubboClient createClient(int port) {
+        final NettyConnectionConfig.MultiplexPoolBuilder poolBuilder = NettyConnectionConfig
+                .MultiplexPoolBuilder
+                .newBuilder()
+                .setInit(false)
+                .setBlockCreateWhenInit(false)
+                .setWaitCreateWhenLastTryAcquire(false)
+                .setMaxPoolSize(1);
+        final NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
+                .setMultiplexPoolBuilder(poolBuilder)
+                .setHost("127.0.0.1")
+                .setPort(port);
+        final DubboClientBuilder builder = new DubboClientBuilder()
+                .setConnectionConfig(connectionConfig);
+        return new NettyDubboClient(builder);
+    }
+
+    private static NettyDubboClient createTlsClient(int port) {
+        final NettyConnectionConfig.MultiplexPoolBuilder poolBuilder = NettyConnectionConfig
+                .MultiplexPoolBuilder
+                .newBuilder()
+                .setInit(false)
+                .setBlockCreateWhenInit(false)
+                .setWaitCreateWhenLastTryAcquire(false)
+                .setMaxPoolSize(1);
+        final NettyConnectionConfig connectionConfig = new NettyConnectionConfig()
+                .setMultiplexPoolBuilder(poolBuilder)
+                .setTlsFallback2Normal(true)
+                .setSslContextBuilder(new SslContextBuilder())
+                .setHost("127.0.0.1")
+                .setPort(port);
+        final DubboClientBuilder builder = new DubboClientBuilder()
+                .setConnectionConfig(connectionConfig);
+        return new NettyDubboClient(builder);
+    }
+
+    private static DubboMessage createDubboMessage(Class<?> returnType, boolean oneway) {
+        final RpcInvocation invocation = new RpcInvocation();
+        invocation.setInterfaceName("com.oppo.test.EchoService");
+        invocation.setMethodName("echo");
+        invocation.setReturnType(returnType);
+        invocation.setSeriType((byte) 2);
+        invocation.setParameterTypes(new Class[]{String.class});
+        invocation.setArguments(new Object[]{"test"});
+        invocation.setOneWay(oneway);
+        try {
+            return ClientCodecHelper.toDubboMessage(invocation);
+        } catch (Exception e) {
+            fail();
+            return null;
+        }
+    }
+
     @Test
     public void requestSuccess() {
         final DubboMessage request = createDubboMessage(String.class, false);
-        final CompletableFuture<RpcResult> future = client.sendRequest(request, String.class, 1000);
+        final CompletableFuture<DubboRpcResult> future = client.sendRequest(request, String.class, 1000);
         try {
-            RpcResult rpcResult = future.get();
+            DubboRpcResult rpcResult = future.get();
             Assert.assertEquals(rpcResult.getValue(), "test");
         } catch (Throwable ex) {
             ex.printStackTrace();
@@ -63,7 +117,7 @@ public class NettyDubboClientTest {
         }
 
         final DubboMessage timeoutRequest = createDubboMessage(String.class, false);
-        final CompletableFuture<RpcResult> timeoutFuture = client.sendRequest(timeoutRequest, String.class, 5);
+        final CompletableFuture<DubboRpcResult> timeoutFuture = client.sendRequest(timeoutRequest, String.class, 5);
         try {
             timeoutFuture.get();
         } catch (Throwable ex) {
@@ -71,9 +125,9 @@ public class NettyDubboClientTest {
             assertEquals(ResponseTimeoutException.class, ex.getCause().getClass());
         }
         final DubboMessage onewayRequest = createDubboMessage(String.class, true);
-        CompletableFuture<RpcResult> onewayFuture = client.sendRequest(onewayRequest, String.class, 1000);
+        CompletableFuture<DubboRpcResult> onewayFuture = client.sendRequest(onewayRequest, String.class, 1000);
         try {
-            RpcResult rpcResult = onewayFuture.get();
+            DubboRpcResult rpcResult = onewayFuture.get();
             assertNull(rpcResult.getValue());
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,27 +135,41 @@ public class NettyDubboClientTest {
         }
         assert onewayRequest != null;
         onewayRequest.getHeader().setOnewayWaited(true);
-        CompletableFuture<RpcResult> onewayWaitedRequest = client.sendRequest(onewayRequest, String.class, 1000);
+        CompletableFuture<DubboRpcResult> onewayWaitedRequest = client.sendRequest(onewayRequest, String.class, 1000);
         try {
-            RpcResult rpcResult = onewayWaitedRequest.get();
+            DubboRpcResult rpcResult = onewayWaitedRequest.get();
             assertNull(rpcResult.getValue());
         } catch (Exception ignore) {
         }
     }
+
+    //@Test
+    //public void tlsFallbackToNormal() {
+    //    final DubboMessage request = createDubboMessage();
+    //    final CompletableFuture<RpcResult> future =
+    //    tlsClient.sendRequest(request, String.class, 1000);
+    //    try {
+    //        RpcResult rpcResult = future.get();
+    //        Assert.assertEquals(rpcResult.getValue(), "test");
+    //    } catch (Throwable ex) {
+    //        ex.printStackTrace();
+    //        Assert.fail();
+    //    }
+    //}
 
     @Test
     public void connectFailed() throws InterruptedException {
         Thread.sleep(1000);
         final DubboMessage request = createDubboMessage(String.class, false);
         final NettyDubboClient nettyDubboClient = createClient(20000);
-        final CompletableFuture<RpcResult> future = nettyDubboClient.sendRequest(request, String.class, 1000);
+        final CompletableFuture<DubboRpcResult> future = nettyDubboClient.sendRequest(request, String.class, 1000);
         try {
             future.get();
             fail();
         } catch (Throwable ex) {
             assertTrue(ex.getCause() instanceof ConnectFailedException);
         }
-        final CompletableFuture<RpcResult> requestFuture = nettyDubboClient.sendRequest(request, String.class);
+        final CompletableFuture<DubboRpcResult> requestFuture = nettyDubboClient.sendRequest(request, String.class);
         try {
             requestFuture.get();
             fail();
@@ -124,15 +192,15 @@ public class NettyDubboClientTest {
         final DubboMessage doubleRequest = createDubboMessage(double.class, true);
         final DubboMessage floatRequest = createDubboMessage(float.class, true);
         final DubboMessage timeoutRequest = createDubboMessage(int.class, true);
-        CompletableFuture<RpcResult> byteResult = client.sendRequest(byteRequest, byte.class, 1000);
-        CompletableFuture<RpcResult> shortResult = client.sendRequest(shortRequest, short.class, 1000);
-        CompletableFuture<RpcResult> intResult = client.sendRequest(intRequest, int.class, 1000);
-        CompletableFuture<RpcResult> longResult = client.sendRequest(longRequest, long.class, 1000);
-        CompletableFuture<RpcResult> booleanResult = client.sendRequest(booleanRequest, boolean.class, 1000);
-        CompletableFuture<RpcResult> charResult = client.sendRequest(charRequest, char.class, 1000);
-        CompletableFuture<RpcResult> doubleResult = client.sendRequest(doubleRequest, double.class, 1000);
-        CompletableFuture<RpcResult> floatResult = client.sendRequest(floatRequest, float.class, 1000);
-        CompletableFuture<RpcResult> timeoutResult = client.sendRequest(timeoutRequest, int.class, 1);
+        CompletableFuture<DubboRpcResult> byteResult = client.sendRequest(byteRequest, byte.class, 1000);
+        CompletableFuture<DubboRpcResult> shortResult = client.sendRequest(shortRequest, short.class, 1000);
+        CompletableFuture<DubboRpcResult> intResult = client.sendRequest(intRequest, int.class, 1000);
+        CompletableFuture<DubboRpcResult> longResult = client.sendRequest(longRequest, long.class, 1000);
+        CompletableFuture<DubboRpcResult> booleanResult = client.sendRequest(booleanRequest, boolean.class, 1000);
+        CompletableFuture<DubboRpcResult> charResult = client.sendRequest(charRequest, char.class, 1000);
+        CompletableFuture<DubboRpcResult> doubleResult = client.sendRequest(doubleRequest, double.class, 1000);
+        CompletableFuture<DubboRpcResult> floatResult = client.sendRequest(floatRequest, float.class, 1000);
+        CompletableFuture<DubboRpcResult> timeoutResult = client.sendRequest(timeoutRequest, int.class, 1);
         try {
             assertEquals((byte) 0, byteResult.get().getValue());
             assertEquals((short) 0, shortResult.get().getValue());
@@ -153,75 +221,12 @@ public class NettyDubboClientTest {
     public void requestTimeout() throws InterruptedException {
         Thread.sleep(1000);
         final DubboMessage request = createDubboMessage(String.class, false);
-        final CompletableFuture<RpcResult> future = client.sendRequest(request, String.class, 100);
+        final CompletableFuture<DubboRpcResult> future = client.sendRequest(request, String.class, 100);
         try {
             future.get();
             fail();
         } catch (Throwable ex) {
             assertTrue(ex.getCause() instanceof ResponseTimeoutException);
-        }
-    }
-
-    //@Test
-    //public void tlsFallbackToNormal() {
-    //    final DubboMessage request = createDubboMessage();
-    //    final CompletableFuture<RpcResult> future =
-    //    tlsClient.sendRequest(request, String.class, 1000);
-    //    try {
-    //        RpcResult rpcResult = future.get();
-    //        Assert.assertEquals(rpcResult.getValue(), "test");
-    //    } catch (Throwable ex) {
-    //        ex.printStackTrace();
-    //        Assert.fail();
-    //    }
-    //}
-
-    private static NettyDubboClient createClient(int port) {
-        final DubboClientBuilder.MultiplexPoolBuilder poolBuilder = DubboClientBuilder
-                .MultiplexPoolBuilder
-                .newBuilder()
-                .setInit(false)
-                .setBlockCreateWhenInit(false)
-                .setWaitCreateWhenLastTryAcquire(false)
-                .setMaxPoolSize(1);
-        final DubboClientBuilder builder = new DubboClientBuilder()
-                .setMultiplexPoolBuilder(poolBuilder)
-                .setHost("127.0.0.1")
-                .setPort(port);
-        return new NettyDubboClient(builder);
-    }
-
-    private static NettyDubboClient createTlsClient(int port) {
-        final DubboClientBuilder.MultiplexPoolBuilder poolBuilder = DubboClientBuilder
-                .MultiplexPoolBuilder
-                .newBuilder()
-                .setInit(false)
-                .setBlockCreateWhenInit(false)
-                .setWaitCreateWhenLastTryAcquire(false)
-                .setMaxPoolSize(1);
-        final DubboClientBuilder builder = new DubboClientBuilder()
-                .setMultiplexPoolBuilder(poolBuilder)
-                .setTlsFallback2Normal(true)
-                .setDubboSslContextBuilder(new DubboSslContextBuilder())
-                .setHost("127.0.0.1")
-                .setPort(port);
-        return new NettyDubboClient(builder);
-    }
-
-    private static DubboMessage createDubboMessage(Class<?> returnType, boolean oneway) {
-        final RpcInvocation invocation = new RpcInvocation();
-        invocation.setInterfaceName("com.oppo.test.EchoService");
-        invocation.setMethodName("echo");
-        invocation.setReturnType(returnType);
-        invocation.setSeriType((byte) 2);
-        invocation.setParameterTypes(new Class[]{String.class});
-        invocation.setArguments(new Object[]{"test"});
-        invocation.setOneWay(oneway);
-        try {
-            return ClientCodecHelper.toDubboMessage(invocation);
-        } catch (Exception e) {
-            fail();
-            return null;
         }
     }
 }

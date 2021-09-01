@@ -24,47 +24,38 @@ import java.util.Map;
  */
 public class RpcInvocation implements Serializable {
     private static final long serialVersionUID = -4355285085441097045L;
-
-    /**
-     * 序列化类型
-     */
-    private byte seriType = 2;
-
-    /**
-     * 请求ID
-     */
-    private long requestId = 0;
-
-    /**
-     * 接口名
-     */
-    private String interfaceName;
-
-    /**
-     * 方法名
-     */
-    private String methodName;
-
-    /**
-     * 服务路由版本
-     */
-    private String version;
-
-    /**
-     * 参数类型
-     */
-    private Class<?>[] parameterTypes;
-
-    /**
-     * 参数
-     */
-    private Object[] arguments;
-
     /**
      * 附件
      */
     private final Map<String, String> attachments = new HashMap<>();
-
+    /**
+     * 序列化类型
+     */
+    private byte seriType = 2;
+    /**
+     * 请求ID
+     */
+    private long requestId = 0;
+    /**
+     * 接口名
+     */
+    private String interfaceName;
+    /**
+     * 方法名
+     */
+    private String methodName;
+    /**
+     * 服务路由版本
+     */
+    private String version;
+    /**
+     * 参数类型
+     */
+    private Class<?>[] parameterTypes;
+    /**
+     * 参数
+     */
+    private Object[] arguments;
     /**
      * @deprecated this field is not used in future.
      */

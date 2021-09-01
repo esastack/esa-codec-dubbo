@@ -15,11 +15,10 @@
  */
 package io.esastack.codec.dubbo.core;
 
+import io.esastack.codec.common.exception.SerializationException;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
-import io.esastack.codec.dubbo.core.exception.SerializationException;
-import io.esastack.codec.dubbo.core.utils.DubboConstants;
 import io.esastack.codec.serialization.api.SerializeConstants;
 import io.netty.buffer.ByteBuf;
 import org.junit.Assert;
@@ -49,7 +48,7 @@ public class CodecHelperTest {
         ByteBuf bodyBuf = dubboMessage.getBody();
         bodyBuf.markReaderIndex();
 
-        RpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
+        DubboRpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
         ResultValue resultValue = (ResultValue) rpcResult.getValue();
         Assert.assertEquals("test", resultValue.getData());
 
@@ -57,13 +56,13 @@ public class CodecHelperTest {
         byte[] body = new byte[bodyBuf.readableBytes()];
         bodyBuf.readBytes(body);
 
-        RpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
+        DubboRpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
                 dubboMessage.getHeader(), body, ResultValue.class);
         ResultValue resultValue2 = (ResultValue) rpcResult2.getValue();
         Assert.assertEquals("test", resultValue2.getData());
 
         DubboMessage nullDubboMessage = newDubboResponse(null);
-        RpcResult nullRpcResult = ClientCodecHelper.toRpcResult(nullDubboMessage, ResultValue.class);
+        DubboRpcResult nullRpcResult = ClientCodecHelper.toRpcResult(nullDubboMessage, ResultValue.class);
         Assert.assertNotNull(nullRpcResult.getAttachments().get("ttfb"));
     }
 
@@ -77,14 +76,14 @@ public class CodecHelperTest {
         ByteBuf bodyBuf = dubboMessage.getBody();
         bodyBuf.markReaderIndex();
 
-        RpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
+        DubboRpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
         Assert.assertEquals(DubboConstants.RESPONSE_STATUS.CLIENT_ERROR, rpcResult.getStatus());
 
         bodyBuf.resetReaderIndex();
         byte[] body = new byte[bodyBuf.readableBytes()];
         bodyBuf.readBytes(body);
 
-        RpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
+        DubboRpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
                 dubboMessage.getHeader(), body, ResultValue.class);
         Assert.assertEquals(DubboConstants.RESPONSE_STATUS.CLIENT_ERROR, rpcResult2.getStatus());
     }
@@ -98,14 +97,14 @@ public class CodecHelperTest {
         ByteBuf bodyBuf = dubboMessage.getBody();
         bodyBuf.markReaderIndex();
 
-        RpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
+        DubboRpcResult rpcResult = ClientCodecHelper.toRpcResult(dubboMessage, ResultValue.class);
         Assert.assertEquals(timeout.getMessage(), rpcResult.getException().getMessage());
 
         bodyBuf.resetReaderIndex();
         byte[] body = new byte[bodyBuf.readableBytes()];
         bodyBuf.readBytes(body);
 
-        RpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
+        DubboRpcResult rpcResult2 = ClientCodecHelper.toRpcResult(
                 dubboMessage.getHeader(), body, ResultValue.class);
         Assert.assertEquals(timeout.getMessage(), rpcResult2.getException().getMessage());
     }
@@ -122,12 +121,12 @@ public class CodecHelperTest {
     }
 
     private DubboMessage newDubboResponse(Object value) throws SerializationException {
-        RpcResult rpcResult = newRpcResult(value);
+        DubboRpcResult rpcResult = newRpcResult(value);
         return ServerCodecHelper.toDubboMessage(rpcResult);
     }
 
-    private RpcResult newRpcResult(Object value) {
-        RpcResult rpcResult = new RpcResult();
+    private DubboRpcResult newRpcResult(Object value) {
+        DubboRpcResult rpcResult = new DubboRpcResult();
         rpcResult.setSeriType(SerializeConstants.HESSIAN2_SERIALIZATION_ID);
         rpcResult.setRequestId(1L);
         if (value instanceof Throwable) {

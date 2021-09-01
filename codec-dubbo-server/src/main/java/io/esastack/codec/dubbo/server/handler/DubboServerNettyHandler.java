@@ -17,9 +17,9 @@ package io.esastack.codec.dubbo.server.handler;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
+import io.esastack.codec.common.exception.UnknownProtocolException;
+import io.esastack.codec.common.ssl.SslUtils;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
-import io.esastack.codec.dubbo.core.exception.UnknownProtocolException;
-import io.esastack.codec.dubbo.core.utils.SslUtils;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

@@ -15,11 +15,7 @@
  */
 package io.esastack.codec.dubbo.client;
 
-import io.esastack.codec.dubbo.client.exception.ConnectFailedException;
-import io.esastack.codec.dubbo.client.exception.RequestTimeoutException;
-import io.esastack.codec.dubbo.client.exception.ResponseTimeoutException;
-import io.esastack.codec.dubbo.client.exception.TslHandshakeFailedException;
-import io.esastack.codec.dubbo.client.exception.UnknownResponseStatusException;
+import io.esastack.codec.common.exception.*;
 import org.junit.Assert;
 import org.junit.Test;
 
