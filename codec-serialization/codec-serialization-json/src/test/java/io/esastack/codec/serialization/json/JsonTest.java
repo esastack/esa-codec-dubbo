@@ -16,7 +16,13 @@
 package io.esastack.codec.serialization.json;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.esastack.codec.serialization.api.DataInputStream;
+import io.esastack.codec.serialization.api.DataOutputStream;
+import org.junit.Assert;
+import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +60,74 @@ public class JsonTest {
         mapper1.activateDefaultTypingAsProperty(null, NON_FINAL, null);
         Object obj = mapper1.readValue(json, ArrayList.class);
         System.out.println(obj);
+    }
+
+    @Test
+    public void readObjectTest() throws Exception{
+
+        Model model = new Model();
+        model.setName("wangwei");
+        Object result = deserializeObj(model, Object.class);
+        Assert.assertTrue(result instanceof Map);
+        result = deserializeObj(model, Model.class);
+        Assert.assertTrue(result instanceof Model);
+
+
+        SubModel subModel = new SubModel();
+        subModel.setName("wangwei");
+        subModel.setAge(10);
+        Object subResult = deserializeObj(subModel, Object.class);
+        Assert.assertTrue(subResult instanceof Map);
+        subResult = deserializeObj(subModel, Model.class);
+        Assert.assertTrue(subResult instanceof Model);
+        subResult = deserializeObj(subModel, SubModel.class);
+        Assert.assertTrue(subResult instanceof SubModel);
+
+    }
+
+    private <T> T deserializeObj(final Object obj, final Class clazz) throws Exception {
+        JsonSerialization serialization = new JsonSerialization();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
+        dataOutputStream.writeObject(obj);
+        dataOutputStream.flush();
+        byte[] content = byteArrayOutputStream.toByteArray();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content);
+        DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
+        return (T) dataInputStream.readObject(clazz);
+    }
+
+    public static class Model {
+        private String name;
+
+        public Model() {
+
+        }
+
+        public Model(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    public static class SubModel extends Model {
+        private int age;
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(final int age) {
+            this.age = age;
+        }
     }
 }
 

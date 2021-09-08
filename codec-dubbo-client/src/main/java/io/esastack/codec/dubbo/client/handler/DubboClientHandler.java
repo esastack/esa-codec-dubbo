@@ -49,7 +49,7 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
     private int sentHeartbeatCount;
 
     public DubboClientHandler(String connectionName, Map<Long, ResponseCallback> callbackMap) {
-        super(); //auto release
+        super(false); //NOT auto release
         this.connectionName = connectionName;
         this.callbackMap = callbackMap;
     }
@@ -118,7 +118,6 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
         // Synchronous call, business thread deserialize
         if (!callback.deserialized()) {
             // Prevent refCnt from becoming 0 and cause ByteBuf to be freed
-            response.retain();
             DubboMessageWrapper messageWrapper = new DubboMessageWrapper(response);
             messageWrapper.addAttachments(ttfbAttachments);
             callback.onResponse(messageWrapper);

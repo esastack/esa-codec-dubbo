@@ -88,6 +88,43 @@ public class Hessian2SerializeTest {
                 SerializeFactory.getSerialization("hessian2") instanceof Hessian2Serialization);
     }
 
+    @Test
+    public void readObjectTest() throws Exception{
+
+        Model model = new Model();
+        model.setName("wangwei");
+        Model result = deserializeObj(model, null);
+        Assert.assertEquals(result.getName(), model.getName());
+        result = deserializeObj(model, Object.class);
+        Assert.assertEquals(result.getName(), model.getName());
+        result = deserializeObj(model, Model.class);
+        Assert.assertEquals(result.getName(), model.getName());
+
+        SubModel subModel = new SubModel();
+        subModel.setName("wangwei");
+        subModel.setAge(10);
+        SubModel subResult = deserializeObj(subModel, null);
+        Assert.assertEquals(subResult.getAge(), subModel.getAge());
+        subResult = deserializeObj(subModel, Object.class);
+        Assert.assertEquals(subResult.getAge(), subModel.getAge());
+        subResult = deserializeObj(subModel, Model.class);
+        Assert.assertEquals(subResult.getAge(), subModel.getAge());
+
+    }
+
+    private <T> T deserializeObj(final Object obj, final Class clazz) throws Exception {
+        Hessian2Serialization serialization = new Hessian2Serialization();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
+        dataOutputStream.writeObject(obj);
+        dataOutputStream.flush();
+        byte[] content = byteArrayOutputStream.toByteArray();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content);
+        DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
+        return (T) dataInputStream.readObject(clazz);
+    }
+
     public static class Model {
         private String name;
 
@@ -105,6 +142,18 @@ public class Hessian2SerializeTest {
 
         public void setName(String name) {
             this.name = name;
+        }
+    }
+
+    public static class SubModel extends Model {
+        private int age;
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(final int age) {
+            this.age = age;
         }
     }
 }
