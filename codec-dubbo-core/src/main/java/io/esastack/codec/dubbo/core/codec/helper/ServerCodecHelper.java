@@ -16,6 +16,8 @@
 package io.esastack.codec.dubbo.core.codec.helper;
 
 import esa.commons.io.IOUtils;
+import esa.commons.logging.Logger;
+import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.common.exception.SerializationException;
 import io.esastack.codec.dubbo.core.DubboConstants;
 import io.esastack.codec.dubbo.core.RpcInvocation;
@@ -27,6 +29,7 @@ import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.api.SerializeFactory;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
@@ -35,11 +38,38 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.esastack.codec.serialization.api.SerializeConstants.HESSIAN2_SERIALIZATION_ID;
+
 public class ServerCodecHelper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerCodecHelper.class);
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
+
+    private static final Map<Byte, ByteBuf> SERIALIZATION_EXCEPTION_BODY = defaultSerializationExceptionBody();
+
+    private static Map<Byte, ByteBuf> defaultSerializationExceptionBody() {
+        final Map<Byte, ByteBuf> bodyMap = new HashMap<>(16);
+        for (Map.Entry<Byte, Serialization> entry : SerializeFactory.getAllById().entrySet()) {
+            ByteBuf body = UnpooledByteBufAllocator.DEFAULT.buffer();
+            try {
+                Serialization serialization = SerializeFactory.getSerialization(HESSIAN2_SERIALIZATION_ID);
+                ByteBufOutputStream byteBufOutputStream = new ByteBufOutputStream(body);
+                DataOutputStream out = serialization.serialize(byteBufOutputStream);
+                out.writeBytes(("The serialization response failed, please check the server log for the specific " +
+                        "failure reason").getBytes());
+                out.flush();
+                bodyMap.put(entry.getKey(), body);
+            } catch (Exception e) {
+                LOGGER.error("Failed to create default serialization exception body for: ", e);
+                body.release();
+                throw new RuntimeException("Failed to create default serialization exception body for: ", e);
+            }
+        }
+        return bodyMap;
+    }
 
     public static DubboMessage toDubboMessage(DubboRpcResult rpcResult) throws SerializationException {
         return toDubboMessage(rpcResult, UnpooledByteBufAllocator.DEFAULT);
@@ -66,8 +96,9 @@ public class ServerCodecHelper {
 
         ByteBufOutputStream byteBufOutputStream = null;
         DataOutputStream out = null;
+        ByteBuf body = alloc.buffer();
         try {
-            byteBufOutputStream = new ByteBufOutputStream(alloc.buffer());
+            byteBufOutputStream = new ByteBufOutputStream(body);
             out = serialization.serialize(byteBufOutputStream);
             if (rpcResult.getException() == null) {
                 final Map<String, String> attachments = rpcResult.getAttachments();
@@ -94,10 +125,13 @@ public class ServerCodecHelper {
                 out.writeThrowable(rpcResult.getException());
             }
             out.flush();
-            response.setBody(byteBufOutputStream.buffer());
+            response.setBody(body);
         } catch (Throwable t) {
-            rpcResult.setException(t);
-            return toDubboMessage(rpcResult, alloc);
+            // If serialization fails, the ByteBuf should be released to prevent memory leaks,
+            // and the default serialization failure message is returned
+            LOGGER.error("Failed to serialization response for: ", t);
+            body.release();
+            response.setBody(SERIALIZATION_EXCEPTION_BODY.get(rpcResult.getSeriType()));
         } finally {
             IOUtils.closeQuietly(out);
             IOUtils.closeQuietly(byteBufOutputStream);
