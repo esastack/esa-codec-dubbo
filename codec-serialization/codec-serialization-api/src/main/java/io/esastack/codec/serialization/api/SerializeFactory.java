@@ -19,6 +19,7 @@ import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import esa.commons.spi.SpiLoader;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,19 +53,19 @@ public class SerializeFactory {
         }
     }
 
-    public static Map<Byte, Serialization> getAllByType() {
-        return ID_CACHE;
-    }
-
-    public static Map<String, Serialization> getAllByName() {
-        return NAME_CACHE;
-    }
-
     public static Serialization getSerialization(byte seriType) {
         return ID_CACHE.get(seriType);
     }
 
     public static Serialization getSerialization(String extensionName) {
         return NAME_CACHE.get(extensionName);
+    }
+
+    public static Map<String, Serialization> getAllByName() {
+        return Collections.unmodifiableMap(NAME_CACHE);
+    }
+
+    public static Map<Byte, Serialization> getAllById() {
+        return Collections.unmodifiableMap(ID_CACHE);
     }
 }

@@ -33,7 +33,7 @@
 package io.esastack.codec.serialization.protobuf;
 
 import com.google.common.base.Strings;
-import esa.commons.serialize.protobuf.wrapper.ThrowableValue;
+import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
 /**
  * For protobuf, all server side exceptions should be wrapped using this specific one.

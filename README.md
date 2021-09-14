@@ -1,8 +1,8 @@
 # Codec-dubbo
-![Build](https://github.com/esastack/codec-dubbo/workflows/Build/badge.svg?branch=main)
-[![codecov](https://codecov.io/gh/esastack/codec-dubbo/branch/main/graph/badge.svg?token=CCQBCBQJP6)](https://codecov.io/gh/esastack/codec-dubbo)
+![Build](https://github.com/esastack/esa-codec-dubbo/workflows/Build/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/esastack/esa-codec-dubbo/branch/main/graph/badge.svg?token=CCQBCBQJP6)](https://codecov.io/gh/esastack/codec-dubbo)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/)
-[![GitHub license](https://img.shields.io/github/license/esastack/codec-dubbo)](https://github.com/esastack/codec-dubbo/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/esastack/esa-codec-dubbo)](https://github.com/esastack/esa-codec-dubbo/blob/main/LICENSE)
 
 Codec-dubbo is a binary codec framework for dubbo protocol
 
@@ -16,7 +16,13 @@ Codec-dubbo is a binary codec framework for dubbo protocol
 
 ##  SDK instructions
 #### 1、Introduce Maven dependencies
-```xml   
+```xml  
+<!-- commons.version >= 0.1.1 --> 
+<dependency>
+    <groupId>io.esastack</groupId>
+    <artifactId>commons</artifactId>
+    <version>${commons.version}</version>
+</dependency>
 <dependency>
     <groupId>io.esastack</groupId>
     <artifactId>codec-dubbo-client</artifactId>
@@ -27,23 +33,45 @@ Codec-dubbo is a binary codec framework for dubbo protocol
     <artifactId>codec-dubbo-server</artifactId>
     <version>${mvn.version}</version>
 </dependency>
+
+<!--netty-->
+<!-- netty.version >= 4.1.52.Final, netty-tcnative.version >= 2.0.34.Final -->
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-all</artifactId>
+    <version>${netty.version}</version>
+</dependency>
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-tcnative</artifactId>
+    <version>${netty-tcnative.version}</version>
+</dependency>
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-tcnative-boringssl-static</artifactId>
+    <version>${netty-tcnative.version}</version>
+</dependency>
 ```
  #### 2、Dubbo Client SDK instructions
  ```java
 public class DubboSDKClient {
-
     public static void main(String[] args) throws Exception {
-        // build client
+
+        // build client config
         final Map<ChannelOption, Object> channelOptions = new HashMap<>();
         channelOptions.put(ChannelOption.SO_KEEPALIVE, true);
         channelOptions.put(ChannelOption.TCP_NODELAY, true);
         channelOptions.put(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-        final DubboClientBuilder.MultiplexPoolBuilder multiplexPoolBuilder = DubboClientBuilder.MultiplexPoolBuilder.newBuilder();
-        final DubboClientBuilder builder = new DubboClientBuilder()
-                .setMultiplexPoolBuilder(multiplexPoolBuilder)
+        NettyConnectionConfig nettyConnectionConfig = new NettyConnectionConfig();
+        NettyConnectionConfig.MultiplexPoolBuilder multiplexPoolBuilder =
+                NettyConnectionConfig.MultiplexPoolBuilder.newBuilder();
+        nettyConnectionConfig.setMultiplexPoolBuilder(multiplexPoolBuilder)
                 .setChannelOptions(channelOptions)
                 .setHost("localhost")
                 .setPort(20880);
+        final DubboClientBuilder builder = new DubboClientBuilder().setConnectionConfig(nettyConnectionConfig);
+
+        // build client
         NettyDubboClient nettyDubboClient = new NettyDubboClient(builder);
 
         // build request
@@ -60,10 +88,11 @@ public class DubboSDKClient {
         DubboMessage request = ClientCodecHelper.toDubboMessage(rpcInvocation);
 
         // Send the request and handle the return value
-        CompletableFuture<RpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
+        CompletableFuture<DubboRpcResult> responseFuture = nettyDubboClient.sendRequest(request, String.class);
 
         responseFuture.whenComplete((r, t) -> {
-            if (t != null || r.getException() != null || StringUtils.isNotEmpty(r.getErrorMessage())) {
+            if (t != null || r.getException() != null ||
+                    (r.getErrorMessage() != null && !"".equals(r.getErrorMessage()))) {
                 // handle exception
             }
             // handle return value r.getValue();
@@ -76,21 +105,44 @@ public class DubboSDKClient {
 
 
 ```java
-public class DubboSDKServer {
+public class ServerDemo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DubboSDKServer.class);
-
-    static ExecutorService workerThreadPool =
-            ThreadPools.builder()
-                    .corePoolSize(200)
-                    .maximumPoolSize(200)
-                    .useSynchronousQueue()
-                    .rejectPolicy((r, executor) -> LOGGER.error("rejectedExecution ")).build();
+    static ExecutorService workerThreadPool = new ThreadPoolExecutor(200, 200, 60, TimeUnit.SECONDS, 
+            new SynchronousQueue<>(),
+            new ThreadFactory() {
+                final AtomicInteger index = new AtomicInteger(0);
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setName("thread-" + index.getAndIncrement());
+                    return thread;
+                }
+            },
+            new ThreadPoolExecutor.AbortPolicy()
+    );
 
     public static void main(String[] args) {
+
+        // build server config
+        final Map<ChannelOption, Object> options = new HashMap<>();
+        options.put(ChannelOption.SO_BACKLOG, 128);
+        options.put(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        final Map<ChannelOption, Object> childOptions = new HashMap<>();
+        childOptions.put(ChannelOption.SO_REUSEADDR, true);
+        childOptions.put(ChannelOption.SO_KEEPALIVE, true);
+        childOptions.put(ChannelOption.TCP_NODELAY, true);
+        NettyServerConfig nettyServerConfig = new NettyServerConfig();
+        nettyServerConfig.setBindIp("localhost")
+                .setPort(20880)
+                .setIoThreads(1)
+                .setBossThreads(4)
+                .setChannelOptions(options)
+                .setChildChannelOptions(childOptions)
+                .setHeartbeatTimeoutSeconds(60);
+
         // build server
         DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
-                .setPort(20880)
+                .setServerConfig(nettyServerConfig)
                 .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
@@ -99,7 +151,6 @@ public class DubboSDKServer {
                             // parse request
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
-                            LOGGER.error("Failed to convert request to rpc invocation for {}", e);
                             dubboResponseHolder.end(null);
                             return;
                         }
@@ -114,13 +165,12 @@ public class DubboSDKServer {
                             try {
                                 // build response
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
-                                        RpcResult.success(
+                                        DubboRpcResult.success(
                                                 invocation.getRequestId(),
                                                 invocation.getSeriType(),
                                                 response),
                                         request.getBody().alloc());
                             } catch (SerializationException e) {
-                                LOGGER.error("Failed to serialize response for {}", e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
                             // send response

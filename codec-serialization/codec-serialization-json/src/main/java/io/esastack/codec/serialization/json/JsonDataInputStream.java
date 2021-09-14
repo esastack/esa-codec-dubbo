@@ -18,7 +18,11 @@ package io.esastack.codec.serialization.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.esastack.codec.serialization.api.DataInputStream;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 
 public class JsonDataInputStream implements DataInputStream {
@@ -67,7 +71,7 @@ public class JsonDataInputStream implements DataInputStream {
         return JacksonUtil.getJsonMapper().readValue(json, cls);
     }
 
-    private <T> T read(Type genericType) throws IOException {
+    <T> T read(Type genericType) throws IOException {
         String json = readLine();
         return JacksonUtil.getJsonMapper().readValue(json, new TypeReference<T>() {
             @Override

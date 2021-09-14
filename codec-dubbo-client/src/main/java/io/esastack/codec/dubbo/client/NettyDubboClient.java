@@ -52,7 +52,7 @@ public class NettyDubboClient extends NettyClient implements DubboClient {
             new HashMap<>(8);
 
     static {
-        SerializeFactory.getAllByType().forEach((seriType, serialization) -> {
+        SerializeFactory.getAllById().forEach((seriType, serialization) -> {
             HashMap<Class<?>, DubboMessageWrapper> wrapperMap = new HashMap<>();
             for (Class<?> clz : UNBOXED_PRIMITIVE_CLASS_LIST) {
                 wrapperMap.put(clz, createDubboMessageWrapperByClass(clz, seriType));

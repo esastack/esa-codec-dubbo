@@ -15,10 +15,15 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.*;
-import esa.commons.serialize.protobuf.wrapper.MapValue;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
+import com.google.protobuf.Empty;
+import com.google.protobuf.Int32Value;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.StringValue;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
 
 import java.io.IOException;
 import java.io.OutputStream;
