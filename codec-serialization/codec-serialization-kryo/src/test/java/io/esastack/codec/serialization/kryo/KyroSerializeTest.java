@@ -17,7 +17,7 @@ package io.esastack.codec.serialization.kryo;
 
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
-import org.junit.Assert;
+import io.esastack.codec.serialization.kryo.utils.ReflectionUtils;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -25,6 +25,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class KyroSerializeTest {
 
@@ -42,6 +45,9 @@ public class KyroSerializeTest {
     public void test() throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         KryoSerialization serialization = new KryoSerialization();
+
+        assertEquals("x-application/kryo", serialization.getContentType());
+
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
@@ -53,6 +59,7 @@ public class KyroSerializeTest {
         dataOutputStream.writeThrowable(throwable);
         dataOutputStream.writeObject(map);
         dataOutputStream.flush();
+        dataOutputStream.close();
 
         byte[] bytes = byteArrayOutputStream.toByteArray();
         byteArrayOutputStream.close();
@@ -62,22 +69,24 @@ public class KyroSerializeTest {
         byte[] bytes1 = dataInputStream.readBytes();
         int int1 = dataInputStream.readInt();
         Long long1 = dataInputStream.readObject(Long.class);
+        assertEquals((byte) 1, byte1);
+        assertEquals((byte) 1, bytes1[0]);
+        assertEquals(1, int1);
+        assertEquals(1L, long1.longValue());
         String utf8 = dataInputStream.readUTF();
+        assertEquals("test", utf8);
         Model model1 = dataInputStream.readObject(Model.class);
         Model model2 = dataInputStream.readObject(Model.class);
         Throwable t = dataInputStream.readThrowable();
         HashMap<String, Object> map1 = (HashMap<String, Object>) dataInputStream.readMap();
-        Assert.assertEquals((byte) 1, byte1);
-        Assert.assertEquals((byte) 1, bytes1[0]);
-        Assert.assertEquals(1, int1);
-        Assert.assertEquals(1L, long1.longValue());
-        Assert.assertEquals("test", utf8);
-        Assert.assertEquals(model.name, model1.getName());
-        Assert.assertEquals(model.name, model2.getName());
-        Assert.assertEquals("test", t.getMessage());
-        Assert.assertEquals(model.name, ((Model) map1.get("key")).name);
+        assertEquals(model.name, model1.getName());
+        assertEquals(model.name, model2.getName());
+        assertEquals("test", t.getMessage());
+        assertEquals(model.name, ((Model) map1.get("key")).name);
         dataInputStream.close();
         byteArrayInputStream.close();
+
+        assertFalse(ReflectionUtils.checkZeroArgConstructor(User.class));
     }
 
     public static class Model implements Serializable {
@@ -98,6 +107,32 @@ public class KyroSerializeTest {
 
         public void setName(String name) {
             this.name = name;
+        }
+    }
+
+    static class User {
+        private String name;
+        private int age;
+
+        public User(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
         }
     }
 }

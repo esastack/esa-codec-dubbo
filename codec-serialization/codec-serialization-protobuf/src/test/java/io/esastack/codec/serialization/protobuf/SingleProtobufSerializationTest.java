@@ -16,23 +16,25 @@
 package io.esastack.codec.serialization.protobuf;
 
 import com.google.protobuf.ByteString;
-import esa.commons.serialize.protobuf.wrapper.TestPB;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.TestPB;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Random;
 
+import static io.esastack.codec.serialization.api.SerializeConstants.PROTOBUF_SINGLE_SERIALIZATION_ID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SingleProtobufSerializationTest {
-
-    private Serialization serialization = new SingleProtobufSerialization();
+    private final Serialization serialization = new SingleProtobufSerialization();
 
     @Test
     public void testPBObject() throws Exception {
@@ -43,9 +45,43 @@ public class SingleProtobufSerializationTest {
 
         dataOutputStream.writeObject(request);
         dataOutputStream.flush();
+        dataOutputStream.close();
 
         DataInputStream dataInputStream = getDataInput(byteArrayOutputStream);
         assertEquals(dataInputStream.readObject(TestPB.PBRequestType.class), request);
+        dataInputStream.close();
+    }
+
+    @Test
+    public void test() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        SingleProtobufSerialization singleProtobufSerialization = new SingleProtobufSerialization();
+
+        assertEquals(PROTOBUF_SINGLE_SERIALIZATION_ID, singleProtobufSerialization.getSeriTypeId());
+        assertEquals("x-application/proto", singleProtobufSerialization.getContentType());
+        assertEquals("proto", singleProtobufSerialization.getSeriName());
+
+        SingleProtobufDataOutputStream serialize =
+                (SingleProtobufDataOutputStream) singleProtobufSerialization.serialize(byteArrayOutputStream);
+        assertThrows(UnsupportedOperationException.class, () -> serialize.writeByte((byte) '1'));
+        assertThrows(UnsupportedOperationException.class, () -> serialize.writeBytes(new byte[]{}));
+        assertThrows(UnsupportedOperationException.class, () -> serialize.writeInt(1));
+        assertThrows(UnsupportedOperationException.class, () -> serialize.writeUTF("foo"));
+        assertThrows(UnsupportedOperationException.class, () -> serialize.writeMap(new HashMap<>()));
+        assertThrows(IllegalArgumentException.class, () -> serialize.writeObject("foo"));
+        serialize.flush();
+        byte[] sourceBytes = byteArrayOutputStream.toByteArray();
+        serialize.close();
+        SingleProtobufDataInputStream deserialize =
+                (SingleProtobufDataInputStream) singleProtobufSerialization.deserialize(
+                        new ByteArrayInputStream(sourceBytes));
+        assertThrows(UnsupportedOperationException.class, deserialize::readByte);
+        assertThrows(UnsupportedOperationException.class, deserialize::readBytes);
+        assertThrows(UnsupportedOperationException.class, deserialize::readInt);
+        assertThrows(UnsupportedOperationException.class, deserialize::readUTF);
+        assertThrows(UnsupportedOperationException.class, deserialize::readMap);
+        assertThrows(IllegalArgumentException.class, () -> deserialize.readObject(String.class));
+        deserialize.close();
     }
 
     private DataInputStream getDataInput(ByteArrayOutputStream byteArrayOutputStream) throws IOException {

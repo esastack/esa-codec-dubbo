@@ -15,10 +15,14 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.*;
-import esa.commons.serialize.protobuf.wrapper.ThrowableValue;
+import com.google.protobuf.ExtensionRegistryLite;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.Parser;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
 import java.io.IOException;
 import java.io.InputStream;
