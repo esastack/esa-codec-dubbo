@@ -19,11 +19,15 @@ import io.esastack.codec.common.connection.NettyConnectionConfig;
 import io.esastack.codec.common.exception.ConnectFailedException;
 import io.esastack.codec.common.exception.ResponseTimeoutException;
 import io.esastack.codec.common.ssl.SslContextBuilder;
-import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.DubboRpcResult;
+import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ClientCodecHelper;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.util.concurrent.CompletableFuture;
@@ -110,7 +114,7 @@ public class NettyDubboClientTest {
         final CompletableFuture<DubboRpcResult> future = client.sendRequest(request, String.class, 1000);
         try {
             DubboRpcResult rpcResult = future.get();
-            Assert.assertEquals(rpcResult.getValue(), "test");
+            Assert.assertEquals("test", rpcResult.getValue());
         } catch (Throwable ex) {
             ex.printStackTrace();
             fail();
@@ -223,7 +227,7 @@ public class NettyDubboClientTest {
         final DubboMessage request = createDubboMessage(String.class, false);
         final CompletableFuture<DubboRpcResult> future = client.sendRequest(request, String.class, 100);
         try {
-            future.get();
+            future.get().getValue();
             fail();
         } catch (Throwable ex) {
             assertTrue(ex.getCause() instanceof ResponseTimeoutException);

@@ -13,7 +13,6 @@ public class PooledKryoFactoryTest {
     public void test() {
         PooledKryoFactory pooledKryoFactory = new PooledKryoFactory();
         pooledKryoFactory.registerClass(String.class);
-        assertThrows(IllegalStateException.class, () -> KryoUtils.register(String.class));
         Kryo kryo = pooledKryoFactory.getKryo();
         pooledKryoFactory.returnKryo(kryo);
         pooledKryoFactory.setRegistrationRequired(false);
