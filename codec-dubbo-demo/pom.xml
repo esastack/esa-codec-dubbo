@@ -20,7 +20,7 @@
     <parent>
         <groupId>io.esastack</groupId>
         <artifactId>codec-dubbo</artifactId>
-        <version>0.0.3-SNAPSHOT</version>
+        <version>0.1.0</version>
     </parent>
 
     <artifactId>codec-dubbo-demo</artifactId>
