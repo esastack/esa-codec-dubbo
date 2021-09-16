@@ -34,35 +34,11 @@ import io.netty.buffer.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.esastack.codec.serialization.api.SerializeConstants.HESSIAN2_SERIALIZATION_ID;
-
 public class ServerCodecHelper {
 
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCodecHelper.class);
-    private static final Map<Byte, ByteBuf> SERIALIZATION_EXCEPTION_BODY = defaultSerializationExceptionBody();
-
-    private static Map<Byte, ByteBuf> defaultSerializationExceptionBody() {
-        final Map<Byte, ByteBuf> bodyMap = new HashMap<>(16);
-        for (Map.Entry<Byte, Serialization> entry : SerializeFactory.getAllById().entrySet()) {
-            ByteBuf body = UnpooledByteBufAllocator.DEFAULT.buffer();
-            try {
-                Serialization serialization = SerializeFactory.getSerialization(HESSIAN2_SERIALIZATION_ID);
-                ByteBufOutputStream byteBufOutputStream = new ByteBufOutputStream(body);
-                DataOutputStream out = serialization.serialize(byteBufOutputStream);
-                out.writeBytes(("The serialization response failed, please check the server log for the specific " +
-                        "failure reason").getBytes());
-                out.flush();
-                bodyMap.put(entry.getKey(), body);
-            } catch (Exception e) {
-                LOGGER.error("Failed to create default serialization exception body for: ", e);
-                body.release();
-                throw new RuntimeException("Failed to create default serialization exception body for: ", e);
-            }
-        }
-        return bodyMap;
-    }
 
     public static DubboMessage toDubboMessage(DubboRpcResult rpcResult) throws SerializationException {
         return toDubboMessage(rpcResult, UnpooledByteBufAllocator.DEFAULT);
@@ -121,10 +97,10 @@ public class ServerCodecHelper {
             response.setBody(body);
         } catch (Throwable t) {
             // If serialization fails, the ByteBuf should be released to prevent memory leaks,
-            // and the default serialization failure message is returned
+            // and throw exception to close connection
             LOGGER.error("Failed to serialization response for: ", t);
             body.release();
-            response.setBody(SERIALIZATION_EXCEPTION_BODY.get(rpcResult.getSeriType()));
+            throw new SerializationException(t);
         } finally {
             IOUtils.closeQuietly(out);
             IOUtils.closeQuietly(byteBufOutputStream);
