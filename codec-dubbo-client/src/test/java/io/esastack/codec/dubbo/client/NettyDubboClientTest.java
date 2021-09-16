@@ -185,43 +185,6 @@ public class NettyDubboClientTest {
     }
 
     @Test
-    public void testDefaultValue() throws InterruptedException {
-        Thread.sleep(1000);
-        final DubboMessage byteRequest = createDubboMessage(byte.class, true);
-        final DubboMessage shortRequest = createDubboMessage(short.class, true);
-        final DubboMessage intRequest = createDubboMessage(int.class, true);
-        final DubboMessage longRequest = createDubboMessage(long.class, true);
-        final DubboMessage booleanRequest = createDubboMessage(boolean.class, true);
-        final DubboMessage charRequest = createDubboMessage(char.class, true);
-        final DubboMessage doubleRequest = createDubboMessage(double.class, true);
-        final DubboMessage floatRequest = createDubboMessage(float.class, true);
-        final DubboMessage timeoutRequest = createDubboMessage(int.class, true);
-        CompletableFuture<DubboRpcResult> byteResult = client.sendRequest(byteRequest, byte.class, 1000);
-        CompletableFuture<DubboRpcResult> shortResult = client.sendRequest(shortRequest, short.class, 1000);
-        CompletableFuture<DubboRpcResult> intResult = client.sendRequest(intRequest, int.class, 1000);
-        CompletableFuture<DubboRpcResult> longResult = client.sendRequest(longRequest, long.class, 1000);
-        CompletableFuture<DubboRpcResult> booleanResult = client.sendRequest(booleanRequest, boolean.class, 1000);
-        CompletableFuture<DubboRpcResult> charResult = client.sendRequest(charRequest, char.class, 1000);
-        CompletableFuture<DubboRpcResult> doubleResult = client.sendRequest(doubleRequest, double.class, 1000);
-        CompletableFuture<DubboRpcResult> floatResult = client.sendRequest(floatRequest, float.class, 1000);
-        CompletableFuture<DubboRpcResult> timeoutResult = client.sendRequest(timeoutRequest, int.class, 1);
-        try {
-            assertEquals((byte) 0, byteResult.get().getValue());
-            assertEquals((short) 0, shortResult.get().getValue());
-            assertEquals(0, intResult.get().getValue());
-            assertEquals(0L, longResult.get().getValue());
-            assertEquals(false, booleanResult.get().getValue());
-            assertEquals(Character.MIN_VALUE, charResult.get().getValue());
-            assertEquals(0.0f, floatResult.get().getValue());
-            assertEquals(0.0d, doubleResult.get().getValue());
-            assertEquals(0, timeoutResult.get().getValue());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
-    @Test
     public void requestTimeout() throws InterruptedException {
         Thread.sleep(1000);
         final DubboMessage request = createDubboMessage(String.class, false);
