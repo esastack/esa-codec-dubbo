@@ -17,8 +17,8 @@ package io.esastack.codec.serialization.protobuf.utils;
 
 import com.google.common.base.Strings;
 import com.google.protobuf.*;
-import esa.commons.serialize.protobuf.wrapper.MapValue;
-import esa.commons.serialize.protobuf.wrapper.ThrowableValue;
+import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
+import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
 import java.io.IOException;
 import java.io.InputStream;

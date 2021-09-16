@@ -20,14 +20,19 @@ import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.common.exception.SerializationException;
 import io.esastack.codec.common.server.NettyServerConfig;
-import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.DubboRpcResult;
+import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.codec.helper.ServerCodecHelper;
+import io.esastack.codec.dubbo.server.DubboServerBuilder;
 import io.esastack.codec.dubbo.server.NettyDubboServer;
 import io.esastack.codec.dubbo.server.handler.DubboResponseHolder;
 import io.esastack.codec.dubbo.server.handler.DubboServerBizHandler;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.ChannelOption;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 public class DubboSDKServer {
@@ -42,29 +47,47 @@ public class DubboSDKServer {
                     .rejectPolicy((r, executor) -> LOGGER.error("rejectedExecution ")).build();
 
     public static NettyDubboServer start(String[] args) {
-        NettyDubboServer dubboServer = NettyDubboServer.newBuilder()
-                .setServerConfig(new NettyServerConfig().setPort(20880))
-                .setBizHandler(new DubboServerBizHandler() {
+        // build server config
+        final Map<ChannelOption, Object> options = new HashMap<>();
+        options.put(ChannelOption.SO_BACKLOG, 128);
+        options.put(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        final Map<ChannelOption, Object> childOptions = new HashMap<>();
+        childOptions.put(ChannelOption.SO_REUSEADDR, true);
+        childOptions.put(ChannelOption.SO_KEEPALIVE, true);
+        childOptions.put(ChannelOption.TCP_NODELAY, true);
+        NettyServerConfig nettyServerConfig = new NettyServerConfig();
+        nettyServerConfig.setBindIp("localhost")
+                .setPort(20880)
+                .setIoThreads(1)
+                .setBossThreads(4)
+                .setChannelOptions(options)
+                .setChildChannelOptions(childOptions)
+                .setHeartbeatTimeoutSeconds(60);
+        // build server
+        DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
+                .setServerConfig(nettyServerConfig)
+                .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
+
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
                         final RpcInvocation invocation;
                         try {
+                            // parse request
                             invocation = ServerCodecHelper.toRpcInvocation(request);
                         } catch (Exception e) {
-                            //TODO 返回错误
-                            e.printStackTrace();
                             dubboResponseHolder.end(null);
                             return;
                         }
                         workerThreadPool.execute(() -> {
                             try {
                                 Thread.sleep(200);
-                            } catch (InterruptedException e) {
-                                //NOP
+                            } catch (Exception ignore) {
                             }
                             String response = (String) invocation.getArguments()[0];
+
                             DubboMessage dubboResponse = null;
                             try {
+                                // build response
                                 dubboResponse = ServerCodecHelper.toDubboMessage(
                                         DubboRpcResult.success(
                                                 invocation.getRequestId(),
@@ -72,23 +95,21 @@ public class DubboSDKServer {
                                                 response),
                                         request.getBody().alloc());
                             } catch (SerializationException e) {
-                                LOGGER.error("Failed to serialize response for reason {} and exception: {}",
-                                        e.getMessage(), e);
                                 dubboResponseHolder.getChannelHandlerContext().channel().close();
                             }
+                            // send response
                             dubboResponseHolder.end(dubboResponse);
                         });
-
                     }
 
                     @Override
                     public void shutdown() {
 
                     }
-                })
-                .build();
-
-        dubboServer.start();
-        return dubboServer;
+                });
+        NettyDubboServer nettyDubboServer = new NettyDubboServer(dubboServerBuilder);
+        // start server
+        nettyDubboServer.start();
+        return nettyDubboServer;
     }
 }

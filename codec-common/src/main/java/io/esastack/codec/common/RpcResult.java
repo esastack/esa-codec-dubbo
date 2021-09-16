@@ -22,11 +22,11 @@ import java.util.Map;
 
 public class RpcResult {
 
+    protected final Map<String, String> attachments = new HashMap<>(16);
     protected Object value;
     protected Throwable exception;
-    protected final Map<String, String> attachments = new HashMap<>(16);
 
-    public RpcResult(){
+    public RpcResult() {
 
     }
 

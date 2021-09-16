@@ -89,7 +89,7 @@ public class Hessian2SerializeTest {
     }
 
     @Test
-    public void readObjectTest() throws Exception{
+    public void readObjectTest() throws Exception {
 
         Model model = new Model();
         model.setName("wangwei");

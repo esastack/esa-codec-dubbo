@@ -17,7 +17,6 @@ package io.esastack.codec.dubbo.server;
 
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.common.connection.ConnectionInitializer;
 import io.esastack.codec.common.server.NettyServer;
 import io.esastack.codec.common.server.NettyServerConfig;
 import io.esastack.codec.common.server.ServerConnectionInitializer;

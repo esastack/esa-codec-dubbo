@@ -16,11 +16,11 @@
 package io.esastack.codec.serialization.protobuf;
 
 import com.google.protobuf.ByteString;
-import esa.commons.serialize.protobuf.wrapper.TestPB;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.TestPB;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;

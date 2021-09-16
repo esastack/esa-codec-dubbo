@@ -67,7 +67,7 @@ public class JsonDataInputStream implements DataInputStream {
         return JacksonUtil.getJsonMapper().readValue(json, cls);
     }
 
-    private <T> T read(Type genericType) throws IOException {
+    <T> T read(Type genericType) throws IOException {
         String json = readLine();
         return JacksonUtil.getJsonMapper().readValue(json, new TypeReference<T>() {
             @Override

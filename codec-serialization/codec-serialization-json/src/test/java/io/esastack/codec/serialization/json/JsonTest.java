@@ -28,11 +28,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.NON_FINAL;
+import static org.junit.Assert.assertEquals;
 
 public class JsonTest {
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void test() throws Exception {
         final List<ModelOne<ModelTwo>> list = new ArrayList<>();
         ModelOne<ModelTwo> modelOne = new ModelOne<>();
 
@@ -57,13 +58,12 @@ public class JsonTest {
         System.out.println(json);
 
         JsonMapper mapper1 = new JsonMapper();
-        mapper1.activateDefaultTypingAsProperty(null, NON_FINAL, null);
-        Object obj = mapper1.readValue(json, ArrayList.class);
-        System.out.println(obj);
+        ArrayList list1 = mapper1.readValue(json, ArrayList.class);
+        assertEquals(1, list1.size());
     }
 
     @Test
-    public void readObjectTest() throws Exception{
+    public void readObjectTest() throws Exception {
 
         Model model = new Model();
         model.setName("wangwei");

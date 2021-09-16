@@ -16,10 +16,10 @@
 package io.esastack.codec.serialization.protobuf;
 
 import com.google.protobuf.*;
-import esa.commons.serialize.protobuf.wrapper.MapValue;
-import esa.commons.serialize.protobuf.wrapper.ThrowableValue;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
+import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +35,10 @@ public class SingleProtobufDataInputStream implements DataInputStream {
     private final ConcurrentMap<Class<?>, SingleMessageMarshaller<?>> marshallers = new ConcurrentHashMap<>();
     private final InputStream is;
 
+    public SingleProtobufDataInputStream(InputStream is) {
+        this.is = is;
+    }
+
     public static Message defaultInst(Class<?> clz) {
         Message defaultInst = instCache.get(clz);
         if (defaultInst != null) {
@@ -47,10 +51,6 @@ public class SingleProtobufDataInputStream implements DataInputStream {
         }
         instCache.put(clz, defaultInst);
         return defaultInst;
-    }
-
-    public SingleProtobufDataInputStream(InputStream is) {
-        this.is = is;
     }
 
     @Override

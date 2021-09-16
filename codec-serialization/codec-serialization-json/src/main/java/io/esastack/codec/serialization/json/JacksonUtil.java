@@ -26,15 +26,17 @@ import static com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.NON_FINA
 
 public class JacksonUtil {
 
-    // used for take the bean actual type with json string; for de-serializing the json string into real type bean.
+    /**
+     * used for take the bean actual type with json string; for de-serializing the json string into real type bean.
+     */
     private static final String TYPE_AS_JSON_PROPERTY = "typeAsJsonProperty";
 
-    private static final JsonMapper mapper = new JsonMapper();
+    private static final JsonMapper MAPPER = new JsonMapper();
 
     static {
         final boolean takeTypeAsProperty = Boolean.getBoolean(TYPE_AS_JSON_PROPERTY);
         if (takeTypeAsProperty) {
-            mapper.activateDefaultTypingAsProperty(new PolymorphicTypeValidator() {
+            MAPPER.activateDefaultTypingAsProperty(new PolymorphicTypeValidator() {
                 @Override
                 public Validity validateBaseType(final MapperConfig<?> config,
                                                  final JavaType baseType) {
@@ -56,10 +58,10 @@ public class JacksonUtil {
                 }
             }, NON_FINAL, null);
         }
-        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        MAPPER.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     public static JsonMapper getJsonMapper() {
-        return mapper;
+        return MAPPER;
     }
 }
