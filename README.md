@@ -1,7 +1,7 @@
 # Codec-dubbo
 ![Build](https://github.com/esastack/esa-codec-dubbo/workflows/Build/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/esastack/esa-codec-dubbo/branch/main/graph/badge.svg?token=CCQBCBQJP6)](https://codecov.io/gh/esastack/codec-dubbo)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo-parent/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.esastack/codec-dubbo/)
 [![GitHub license](https://img.shields.io/github/license/esastack/esa-codec-dubbo)](https://github.com/esastack/esa-codec-dubbo/blob/main/LICENSE)
 
 Codec-dubbo is a binary codec framework for dubbo protocol
