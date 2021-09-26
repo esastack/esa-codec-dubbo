@@ -55,6 +55,10 @@ public class NettyConnectionConfig {
         return this;
     }
 
+    public String getAddress() {
+        return host + ":" + port;
+    }
+
     public String getHost() {
         return host;
     }

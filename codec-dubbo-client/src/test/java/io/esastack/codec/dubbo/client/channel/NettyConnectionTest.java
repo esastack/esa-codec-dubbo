@@ -20,15 +20,15 @@ import io.esastack.codec.common.connection.NettyConnectionConfig;
 import io.esastack.codec.common.exception.ConnectFailedException;
 import io.esastack.codec.dubbo.client.DubboSDKServer;
 import io.esastack.codec.dubbo.server.NettyDubboServer;
-import io.netty.channel.ChannelFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.ConnectException;
+import java.util.concurrent.CompletableFuture;
 
-public class NettyConenctionTest {
+public class NettyConnectionTest {
 
     private static volatile NettyDubboServer server;
 
@@ -64,14 +64,14 @@ public class NettyConenctionTest {
     public void connectSyncFailed() {
         final NettyConnectionConfig connectionConfig = createConnectionConfig(20000);
         final NettyConnection channel = new NettyConnection(connectionConfig, null);
-        channel.connect();
+        channel.connectSync();
     }
 
     @Test
     public void connectSyncSuccess() {
         final NettyConnectionConfig connectionConfig = createConnectionConfig(20880);
         final NettyConnection channel = new NettyConnection(connectionConfig, null);
-        channel.connect();
+        channel.connectSync();
         Assert.assertTrue(channel.isActive());
         Assert.assertTrue(channel.isWritable());
         Assert.assertTrue(channel.getCallbackMap().isEmpty());
@@ -83,13 +83,13 @@ public class NettyConenctionTest {
     public void connectAsyncFailed() {
         final NettyConnectionConfig connectionConfig = createConnectionConfig(20000);
         final NettyConnection channel = new NettyConnection(connectionConfig, null);
-        final ChannelFuture future = channel.asyncConnect();
+        final CompletableFuture future = channel.connect();
         try {
             future.get();
             Assert.fail();
         } catch (Throwable ex) {
             //ex.printStackTrace();
-            Assert.assertTrue(ex.getCause() instanceof ConnectException);
+            Assert.assertTrue(ex.getCause() instanceof ConnectFailedException);
         }
     }
 
@@ -97,7 +97,7 @@ public class NettyConenctionTest {
     public void connectAsyncSuccess() {
         final NettyConnectionConfig connectionConfig = createConnectionConfig(20880);
         final NettyConnection channel = new NettyConnection(connectionConfig, null);
-        final ChannelFuture future = channel.asyncConnect();
+        final CompletableFuture future = channel.connect();
         try {
             future.get();
             Assert.assertTrue(channel.isActive());
@@ -106,5 +106,7 @@ public class NettyConenctionTest {
             Assert.fail();
         }
     }
+
+
 }
 
