@@ -106,12 +106,14 @@ public class NettyConnection {
         this.channel = connectFuture.channel();
         this.connectTimeout = INSTANCE.newTimeout(
                 to -> handleTimeout(connectFuture), connectionConfig.getConnectTimeout(), TimeUnit.MILLISECONDS);
+        //The listener is executed before the ChannelHandlers, so the attr set by the listener would been seen by
+        //all the handlers.
         connectFuture.addListener(future -> {
             if (!future.isSuccess()) {
                 handleConnectFailure(future);
             } else {
                 //NO active event handling, success should be handled in Last ChannelHandler.
-                //Just set the attr, to make it seen at channel handler.
+                //Just set the attr, to make it been seen at channel handler.
                 ConnUtil.setConnectionAttr(channel, this);
             }
         });
