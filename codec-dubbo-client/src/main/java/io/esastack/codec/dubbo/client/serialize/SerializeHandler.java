@@ -69,7 +69,6 @@ public class SerializeHandler {
     public void deserialize(final DubboMessage response,
                             final ResponseCallback callback,
                             final Map<String, String> ttfbAttachments) {
-        response.retain();
         if (ENABLE_SERIALIZE_POOL) {
             try {
                 executor.submit(() -> doDeserialize(response, callback, ttfbAttachments));

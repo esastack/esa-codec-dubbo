@@ -29,22 +29,16 @@ import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
 import io.esastack.codec.serialization.api.SerializeFactory;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.buffer.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ServerCodecHelper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerCodecHelper.class);
-
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerCodecHelper.class);
 
     public static DubboMessage toDubboMessage(DubboRpcResult rpcResult) throws SerializationException {
         return toDubboMessage(rpcResult, UnpooledByteBufAllocator.DEFAULT);

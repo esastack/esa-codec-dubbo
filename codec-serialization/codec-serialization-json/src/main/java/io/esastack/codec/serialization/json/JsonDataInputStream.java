@@ -18,11 +18,7 @@ package io.esastack.codec.serialization.json;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.esastack.codec.serialization.api.DataInputStream;
 
-import java.io.BufferedReader;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Type;
 
 public class JsonDataInputStream implements DataInputStream {

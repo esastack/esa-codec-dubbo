@@ -15,13 +15,10 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.ExtensionRegistryLite;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Message;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
+import com.google.protobuf.*;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
 import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
 import java.io.IOException;
@@ -38,6 +35,10 @@ public class SingleProtobufDataInputStream implements DataInputStream {
     private final ConcurrentMap<Class<?>, SingleMessageMarshaller<?>> marshallers = new ConcurrentHashMap<>();
     private final InputStream is;
 
+    public SingleProtobufDataInputStream(InputStream is) {
+        this.is = is;
+    }
+
     public static Message defaultInst(Class<?> clz) {
         Message defaultInst = instCache.get(clz);
         if (defaultInst != null) {
@@ -52,28 +53,24 @@ public class SingleProtobufDataInputStream implements DataInputStream {
         return defaultInst;
     }
 
-    public SingleProtobufDataInputStream(InputStream is) {
-        this.is = is;
-    }
-
     @Override
     public int readInt() throws IOException {
-        throw new UnsupportedOperationException();
+        return read(Int32Value.class).getValue();
     }
 
     @Override
     public byte readByte() throws IOException {
-        throw new UnsupportedOperationException();
+        return (byte) read(Int32Value.class).getValue();
     }
 
     @Override
     public byte[] readBytes() throws IOException {
-        throw new UnsupportedOperationException();
+        return read(BytesValue.class).getValue().toByteArray();
     }
 
     @Override
     public String readUTF() throws IOException {
-        throw new UnsupportedOperationException();
+        return read(StringValue.class).getValue();
     }
 
     @Override
@@ -89,7 +86,7 @@ public class SingleProtobufDataInputStream implements DataInputStream {
 
     @Override
     public Map readMap() throws IOException, ClassNotFoundException {
-        throw new UnsupportedOperationException();
+        return ProtobufUtil.parseFrom(MapValue.Map.class, is).getAttachmentsMap();
     }
 
     @Override

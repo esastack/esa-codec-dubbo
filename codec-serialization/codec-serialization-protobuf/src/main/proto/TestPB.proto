@@ -17,7 +17,7 @@
 
 syntax = "proto3";
 
-package esa.commons.serialize.protobuf;
+package io.esastack.codec.serialization.protobuf;
 
 option java_package = "io.esastack.codec.serialization.protobuf.wrapper";
 option java_multiple_files = false;
@@ -30,18 +30,18 @@ message PBRequestType {
     bool sex = 5;
     string name = 6;
     bytes msg = 7;
-    repeated esa.commons.serialize.protobuf.PhoneNumber phone = 8;
+    repeated io.esastack.codec.serialization.protobuf.PhoneNumber phone = 8;
     map<string, PhoneNumber> doubleMap = 9;
 }
 
 message PBResponseType {
     string msg = 1;
-    esa.commons.serialize.protobuf.PBRequestType requestType = 2;
+    io.esastack.codec.serialization.protobuf.PBRequestType requestType = 2;
 }
 
 message PhoneNumber {
     string number = 1;
-    esa.commons.serialize.protobuf.PhoneType type = 2;
+    io.esastack.codec.serialization.protobuf.PhoneType type = 2;
 }
 
 enum PhoneType {

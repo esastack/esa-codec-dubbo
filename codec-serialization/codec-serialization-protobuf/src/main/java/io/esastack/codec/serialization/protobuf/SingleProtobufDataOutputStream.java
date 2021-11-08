@@ -15,9 +15,10 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.MessageLite;
+import com.google.protobuf.*;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
+import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,22 +34,30 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
 
     @Override
     public void writeUTF(String v) throws IOException {
-        throw new UnsupportedOperationException();
+        if (v == null) {
+            writeObject(null);
+            return;
+        }
+        writeObject(StringValue.newBuilder().setValue(v).build());
     }
 
     @Override
     public void writeInt(int v) throws IOException {
-        throw new UnsupportedOperationException();
+        writeObject(Int32Value.newBuilder().setValue(v).build());
     }
 
     @Override
     public void writeByte(byte v) throws IOException {
-        throw new UnsupportedOperationException();
+        writeObject(Int32Value.newBuilder().setValue(v).build());
     }
 
     @Override
     public void writeBytes(byte[] b) throws IOException {
-        throw new UnsupportedOperationException();
+        if (b == null) {
+            writeObject(null);
+            return;
+        }
+        writeObject(BytesValue.newBuilder().setValue(ByteString.copyFrom(b)).build());
     }
 
     @Override
@@ -64,7 +73,11 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
 
     @Override
     public void writeMap(Map<String, String> map) throws IOException {
-        throw new UnsupportedOperationException();
+        if (map == null) {
+            writeObject(null);
+            return;
+        }
+        writeObject(MapValue.Map.newBuilder().putAllAttachments(map).build());
     }
 
     @Override

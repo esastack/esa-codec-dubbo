@@ -17,7 +17,7 @@
 
 syntax = "proto3";
 
-package esa.commons.serialize.protobuf.wrapper;
+package io.esastack.codec.serialization.protobuf;
 
 option java_package = "io.esastack.codec.serialization.protobuf.wrapper";
 option java_multiple_files = false;

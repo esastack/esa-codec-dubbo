@@ -42,10 +42,6 @@ public abstract class NettyClient {
     protected final NettyConnectionConfig connectionConfig;
     protected final MultiplexPool<NettyConnection> connectionPool;
 
-    protected static void addTimeoutTask(TimerTask task, long delayMillis) {
-        TIME_OUT_TIMER.newTimeout(task, delayMillis, TimeUnit.MILLISECONDS);
-    }
-
     public NettyClient(final NettyConnectionConfig connectionConfig) {
         this.connectionConfig = connectionConfig;
         this.connectionConfig.setConnectionInitializer(createConnectionInitializer(connectionConfig));
@@ -59,6 +55,10 @@ public abstract class NettyClient {
                 .factory(new PooledNettyConnectionFactory(connectionConfig))
                 .init(multiplexPoolBuilder.isInit())
                 .build();
+    }
+
+    protected static void addTimeoutTask(TimerTask task, long delayMillis) {
+        TIME_OUT_TIMER.newTimeout(task, delayMillis, TimeUnit.MILLISECONDS);
     }
 
     protected void notifyWriteDone(final ChannelFuture channelFuture,

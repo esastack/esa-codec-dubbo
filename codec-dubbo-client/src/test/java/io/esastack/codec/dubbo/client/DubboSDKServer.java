@@ -63,12 +63,12 @@ public class DubboSDKServer {
                 .setChannelOptions(options)
                 .setChildChannelOptions(childOptions)
                 .setHeartbeatTimeoutSeconds(60);
-
         // build server
         DubboServerBuilder dubboServerBuilder = new DubboServerBuilder()
                 .setServerConfig(nettyServerConfig)
                 .setBizHandler(new DubboServerBizHandler() { // handle request and return response
                     @Override
+
                     public void process(DubboMessage request, DubboResponseHolder dubboResponseHolder) {
                         final RpcInvocation invocation;
                         try {
@@ -108,7 +108,6 @@ public class DubboSDKServer {
                     }
                 });
         NettyDubboServer nettyDubboServer = new NettyDubboServer(dubboServerBuilder);
-
         // start server
         nettyDubboServer.start();
         return nettyDubboServer;
