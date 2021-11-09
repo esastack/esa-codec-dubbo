@@ -15,12 +15,7 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.BytesValue;
-import com.google.protobuf.Empty;
-import com.google.protobuf.Int32Value;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.StringValue;
+import com.google.protobuf.*;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
 import io.esastack.codec.serialization.protobuf.wrapper.MapValue;

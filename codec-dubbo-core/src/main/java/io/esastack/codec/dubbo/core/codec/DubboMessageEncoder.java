@@ -63,9 +63,16 @@ public class DubboMessageEncoder extends ChannelOutboundHandlerAdapter {
                 }
                 ctx.writeAndFlush(compositeByteBuf, promise);
             } else {
-                buffer.writeBytes(dubboMessage.getBody());
-                ctx.writeAndFlush(buffer, promise);
-                ReferenceCountUtil.release(dubboMessage);
+                try {
+                    buffer.writeBytes(dubboMessage.getBody());
+                    ctx.writeAndFlush(buffer, promise);
+                } catch (Throwable ex) {
+                    logger.error("Failed to merge body with header.", ex);
+                    ReferenceCountUtil.release(buffer);
+                    throw ex;
+                } finally {
+                    ReferenceCountUtil.release(dubboMessage);
+                }
             }
         } else {
             ctx.writeAndFlush(msg, promise);

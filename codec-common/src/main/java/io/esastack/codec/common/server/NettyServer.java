@@ -18,7 +18,6 @@ package io.esastack.codec.common.server;
 import esa.commons.StringUtils;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
-import io.esastack.codec.common.connection.ConnectionInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
@@ -60,7 +59,7 @@ public abstract class NettyServer {
 
     @SuppressWarnings("unchecked")
     public void start() {
-        LOGGER.info("Starting netty dubbo server,settings:" + this.serverConfig);
+        LOGGER.info("Starting netty server,settings:" + this.serverConfig);
         final SocketAddress socketAddress;
         final Class<? extends ServerChannel> serverChannelClass;
         if (!StringUtils.isEmpty(serverConfig.getUnixDomainSocketFile())) {
@@ -93,10 +92,10 @@ public abstract class NettyServer {
                     serverConfig.getConnectionInitializer().initialize(sh);
                 }
             }).bind(socketAddress).sync().channel().closeFuture().addListener(f ->
-                    LOGGER.info("Dubbo server is closed: " + bindAddr));
-            LOGGER.info("Dubbo server is listening on: " + bindAddr);
+                    LOGGER.info("Netty server is closed: " + bindAddr));
+            LOGGER.info("Netty server is listening on: " + bindAddr);
         } catch (Throwable t) {
-            throw new RuntimeException("Failed to start dubbo server on: " + bindAddr, t);
+            throw new RuntimeException("Failed to start netty server on: " + bindAddr, t);
         }
     }
 
@@ -107,16 +106,16 @@ public abstract class NettyServer {
         shutdown0();
         //停止网络读写
         stopNetworkReadAndWrite();
-        LOGGER.info("*********************Netty Dubbo Server[" + serverConfig.getBindIp() + ":" +
+        LOGGER.info("*********************Netty Server[" + serverConfig.getBindIp() + ":" +
                 serverConfig.getPort() + "] closed!***************************************");
     }
 
     protected SslContext createSslContext(final NettyServerConfig serverConfig) throws IOException {
         if (serverConfig.getSslContextBuilder() == null) {
-            LOGGER.info("Dubbo server does not enable SSL encryption");
+            LOGGER.info("Netty server does not enable SSL encryption");
             return null;
         }
-        LOGGER.info("Dubbo server enabled SSL encryption");
+        LOGGER.info("Netty server enabled SSL encryption");
         return serverConfig.getSslContextBuilder().buildServer();
     }
 
@@ -125,7 +124,7 @@ public abstract class NettyServer {
     protected abstract ServerConnectionInitializer createConnectionInitializer(final NettyServerConfig serverConfig);
 
     private void stopAcceptNewConnection() {
-        LOGGER.info("*********************Netty Http Server[" + serverConfig.getBindIp() + ":" +
+        LOGGER.info("*********************Netty Server[" + serverConfig.getBindIp() + ":" +
                 serverConfig.getPort() + "] stopAcceptNewConnection***********************");
         if (bossEventLoopGroup != null) {
             bossEventLoopGroup.shutdownGracefully();
@@ -133,7 +132,7 @@ public abstract class NettyServer {
     }
 
     private void stopNetworkReadAndWrite() {
-        LOGGER.info("*********************Netty Http Server[" + serverConfig.getBindIp() + ":" +
+        LOGGER.info("*********************Netty Server[" + serverConfig.getBindIp() + ":" +
                 serverConfig.getPort() + "] stopNetworkReadAndWrite***********************");
         if (ioEventLoopGroup != null) {
             ioEventLoopGroup.shutdownGracefully();
