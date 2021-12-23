@@ -1,11 +1,14 @@
 package io.esastack.codec.common.connection;
 
 import esa.commons.StringUtils;
+import esa.commons.concurrent.ThreadFactories;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.common.ResponseCallback;
 import io.esastack.codec.common.constant.Constants;
 import io.esastack.codec.common.exception.ConnectFailedException;
+import io.esastack.codec.common.exception.TslHandshakeFailedException;
+import io.esastack.codec.common.ssl.SslUtils;
 import io.esastack.codec.common.utils.NettyUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -18,25 +21,29 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.Future;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 构建客户端Channel
+ * Connection based on netty Channel
  */
 public class NettyConnection {
 
     private static final EventLoopGroup GROUP;
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyConnection.class);
     private static final AtomicInteger CONNECT_NUMBER = new AtomicInteger(0);
+    private static final ThreadFactory THREAD_FACTORY =
+            ThreadFactories.namedThreadFactory("DubboConnect-Timer-", true);
+    private static final Timer INSTANCE = new HashedWheelTimer(THREAD_FACTORY);
 
     static {
         int threads = Math.min(10, Runtime.getRuntime().availableProcessors());
@@ -53,13 +60,15 @@ public class NettyConnection {
     private final AtomicLong requestIdAtomic;
     private final NettyConnectionConfig connectionConfig;
     private final Map<Long, ResponseCallback> callbackMap;
+    private final CompletableFuture<Boolean> completedFuture;
     private volatile Channel channel;
     private volatile String connectionName;
+    private volatile Timeout connectTimeout;
     /**
-     * Future of the TSL handshake; This is assigned when the channel is initialized, at this time this channel is not
+     * Future of the TLS handshake; This is assigned when the channel is initialized, at this time this channel is not
      * connected, all the listeners are not executed.
      */
-    private volatile Future<Channel> tslHandshakeFuture;
+    private volatile Future<Channel> tlsHandshakeFuture;
 
     public NettyConnection(NettyConnectionConfig connectionConfig, SslContext sslContext) {
         this.connectionConfig = connectionConfig;
@@ -67,52 +76,119 @@ public class NettyConnection {
         // capacity suggest to set small number because easy to get oom and low tps
         this.callbackMap = new ConcurrentHashMap<>(16);
         this.requestIdAtomic = new AtomicLong(0);
+        this.completedFuture = new CompletableFuture<>();
     }
 
-    public void connect() {
+    public void connectSync() {
+        final CompletableFuture<Boolean> f = connect();
+        try {
+            f.get();
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            throw new ConnectFailedException(cause);
+        } catch (Throwable e) {
+            throw new ConnectFailedException(e);
+        }
+    }
+
+    public CompletableFuture<Boolean> connect() {
         this.connectionName = StringUtils.concat("connect#",
                 String.valueOf(CONNECT_NUMBER.getAndIncrement()),
                 "[",
-                connectionConfig.getHost(),
-                ":",
-                String.valueOf(connectionConfig.getPort()),
+                connectionConfig.getAddress(),
                 "]");
 
-        Bootstrap bootstrap = newBootStrap();
-        ChannelFuture channelFuture = bootstrap.connect();
-        boolean ret = channelFuture.awaitUninterruptibly(connectionConfig.getConnectTimeout(), TimeUnit.MILLISECONDS);
-        if (ret && channelFuture.isSuccess()) {
-            this.channel = channelFuture.channel();
+        final Bootstrap bootstrap = newBootStrap();
+        final ChannelFuture connectFuture = bootstrap.connect();
+        this.channel = connectFuture.channel();
+        this.connectTimeout = INSTANCE.newTimeout(
+                to -> handleTimeout(connectFuture), connectionConfig.getConnectTimeout(), TimeUnit.MILLISECONDS);
+        //The listener is executed before the ChannelHandlers, so the attr set by the listener would been seen by
+        //all the handlers.
+        connectFuture.addListener(future -> {
+            if (!future.isSuccess()) {
+                handleConnectFailure(future);
+            } else {
+                //NO active event handling, success should be handled in Last ChannelHandler.
+                //Just set the attr, to make it been seen at channel handler.
+                ConnUtil.setConnectionAttr(channel, this);
+            }
+        });
+        return this.completedFuture;
+    }
+
+    public void handleTimeout(final ChannelFuture channelFuture) {
+        if (completedFuture.isDone()) {
             return;
         }
 
-        Throwable cause = channelFuture.cause();
-        if (cause != null) {
-            throw new ConnectFailedException(cause);
+        final String address = connectionConfig.getAddress();
+        if (!channelFuture.isDone()) {
+            final String errMsg = "Client connect to the " + address + " timeout.";
+            completedFuture.completeExceptionally(new ConnectFailedException(errMsg));
+            //This is executed in another thread, tlsHandshakeFuture may be null at the critical time
+        } else if (sslContext != null && (tlsHandshakeFuture == null || !tlsHandshakeFuture.isDone())) {
+            final String errMsg = "Client TSL handshake with " + address + " timeout.";
+            completedFuture.completeExceptionally(new TslHandshakeFailedException(errMsg));
         }
-        throw new ConnectFailedException("Client connect to the " +
-                connectionConfig.getHost() + ":" + connectionConfig.getPort() + " timeout.");
+        close();
     }
 
-    public ChannelFuture asyncConnect() {
-        this.connectionName = StringUtils.concat("connect#",
-                String.valueOf(CONNECT_NUMBER.getAndIncrement()),
-                "[",
-                connectionConfig.getHost(),
-                ":",
-                String.valueOf(connectionConfig.getPort()),
-                "]");
+    public void handleConnectFailure(final Future future) {
+        close();
+        connectTimeout.cancel();
+        final String errMsg = "Client connect to the " +
+                connectionConfig.getHost() +
+                ":" +
+                connectionConfig.getPort() +
+                " failure.";
+        completedFuture.completeExceptionally(new ConnectFailedException(errMsg, future.cause()));
+    }
 
-        Bootstrap bootstrap = newBootStrap();
-        ChannelFuture channelFuture = bootstrap.connect();
-        this.channel = channelFuture.channel();
-        return channelFuture;
+    public void handleConnectActive() {
+        if (completedFuture.isDone()) {
+            //already timeout yet
+            return;
+        }
+
+        if (tlsHandshakeFuture != null) {
+            /*
+             * TSL handshake future is set when init the Channel; because the init processing is async,
+             * so it may be null at the create time, and because the connect processing is after the init
+             * processing, so when the listeners are called, the init processing is completed, so the tls
+             * handshake future is definitely assigned.
+             */
+            tlsHandshakeFuture.addListener(f -> handleTlsComplete());
+        } else {
+            connectTimeout.cancel();
+            completedFuture.complete(true);
+            LOGGER.info("Client connect to the " + connectionConfig.getAddress() + " success.");
+        }
+    }
+
+    void handleTlsComplete() {
+        connectTimeout.cancel();
+        if (tlsHandshakeFuture.isSuccess()) {
+            //save TLS certificate
+            SslUtils.extractSslPeerCertificate(channel);
+            completedFuture.complete(true);
+            LOGGER.info("Client TSL handshake with the " + connectionConfig.getHost() + ":" +
+                    connectionConfig.getPort() + " success.");
+        } else {
+            close();
+            final String errMsg = "Client TSL handshake with the " + connectionConfig.getHost() + ":" +
+                    connectionConfig.getPort() + " failure.";
+            completedFuture.completeExceptionally(new TslHandshakeFailedException(errMsg, tlsHandshakeFuture.cause()));
+        }
     }
 
     public boolean isActive() {
         return this.channel != null &&
                 this.channel.isActive() &&
-                (this.tslHandshakeFuture == null || this.tslHandshakeFuture.isSuccess());
+                (this.tlsHandshakeFuture == null || this.tlsHandshakeFuture.isSuccess());
     }
 
     public CompletableFuture<Void> close() {
@@ -175,7 +251,7 @@ public class NettyConnection {
                     SslHandler sslHandler = new SslHandler(sslContext.newEngine(ch.alloc()));
                     sslHandler.setHandshakeTimeoutMillis(Math.min(connectionConfig.getConnectTimeout(),
                             connectionConfig.getSslContextBuilder().getHandshakeTimeoutMillis()));
-                    NettyConnection.this.tslHandshakeFuture = sslHandler.handshakeFuture();
+                    NettyConnection.this.tlsHandshakeFuture = sslHandler.handshakeFuture();
                     ch.pipeline().addLast(sslHandler);
                 }
                 ch.pipeline().addLast(connectionConfig.getChannelHandlers().toArray(new ChannelHandler[0]));
@@ -184,6 +260,7 @@ public class NettyConnection {
                 } else {
                     LOGGER.warn("No connectionInitializer configured for " + connectionName);
                 }
+                ch.pipeline().addLast(ConnectionActiveHandler.INSTANCE);
 
                 //打印连接、关闭连接调试信息
                 if (LOGGER.isDebugEnabled()) {
@@ -215,12 +292,12 @@ public class NettyConnection {
         return this.connectionName;
     }
 
-    public Future<Channel> getTslHandshakeFuture() {
-        return tslHandshakeFuture;
+    public Future<Channel> getTlsHandshakeFuture() {
+        return tlsHandshakeFuture;
     }
 
-    public void setTslHandshakeFuture(final Future<Channel> tslHandshakeFuture) {
-        this.tslHandshakeFuture = tslHandshakeFuture;
+    public void setTlsHandshakeFuture(final Future<Channel> tlsHandshakeFuture) {
+        this.tlsHandshakeFuture = tlsHandshakeFuture;
     }
 
     public Channel getChannel() {
@@ -229,5 +306,9 @@ public class NettyConnection {
 
     public void setChannel(final Channel channel) {
         this.channel = channel;
+    }
+
+    public CompletableFuture<Boolean> getCompletedFuture() {
+        return completedFuture;
     }
 }

@@ -148,117 +148,37 @@ public class PooledNettyConnectionFactoryTest {
                 new PooledNettyConnectionFactory(createConfig(20880, 100));
         final NettyConnection nettyConnection =
                 new NettyConnection(createConfig(20880, 100), null);
-        final NettyConnection ch1 = factory.connectSync(nettyConnection, new TslHandshakeFailedException(""));
+        final NettyConnection ch1 = factory.fallback2Normal(nettyConnection, new TslHandshakeFailedException(""));
         assertNotEquals(nettyConnection, ch1);
 
         try {
-            factory.connectSync(nettyConnection, new ConnectFailedException(""));
+            factory.fallback2Normal(nettyConnection, new ConnectFailedException(""));
             fail();
         } catch (Exception e) {
             assertTrue(e instanceof ConnectFailedException);
         }
 
         try {
-            factory.connectSync(nettyConnection, new RuntimeException(""));
+            factory.fallback2Normal(nettyConnection, new RuntimeException(""));
             fail();
         } catch (Exception e) {
             assertTrue(e instanceof ConnectFailedException);
         }
 
-        final NettyConnection ch4 = factory.connectSync(nettyConnection, null);
+        final NettyConnection ch4 = factory.fallback2Normal(nettyConnection, null);
         assertEquals(nettyConnection, ch4);
     }
 
     @Test
     @Ignore
-    public void handleConnectionComplete() {
-        try {
-            //un-success without ssl
-            final PooledNettyConnectionFactory factory =
-                    new PooledNettyConnectionFactory(createConfig(20000, 100));
-            final NettyConnection nettyConnection =
-                    new NettyConnection(createConfig(20000, 100), null);
-            final CompletableFuture<NettyConnection> future = new CompletableFuture<>();
-            final Channel channel = new EmbeddedChannel();
-            final DefaultChannelPromise channelPromise = new DefaultChannelPromise(channel);
-            factory.handleConnectionComplete(channelPromise, createTimeout(), future, nettyConnection);
-            future.get();
-            fail();
-        } catch (Exception e) {
-            assertTrue(e.getCause() instanceof ConnectFailedException);
-        }
-
-        try {
-            //success without ssl
-            final PooledNettyConnectionFactory factory =
-                    new PooledNettyConnectionFactory(createConfig(20000, 100));
-            final NettyConnection nettyConnection =
-                    new NettyConnection(createConfig(20000, 100), null);
-            final CompletableFuture<NettyConnection> future = new CompletableFuture<>();
-            final Channel channel = new EmbeddedChannel();
-            final DefaultChannelPromise channelPromise = new DefaultChannelPromise(channel);
-            channelPromise.setSuccess();
-            factory.handleConnectionComplete(channelPromise, createTimeout(), future, nettyConnection);
-            future.get();
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-
-        try {
-            //un-success with ssl
-            final SslContext sslContext = buildSSLContext();
-            final NettyConnection sslNettyChannel =
-                    new NettyConnection(createConfig(20000, 100), sslContext);
-            sslNettyChannel.setTslHandshakeFuture(createTlsHandshakeFuture(false));
-            final PooledNettyConnectionFactory sslFactory =
-                    new PooledNettyConnectionFactory(createSslConfig(20000, 100));
-            final DefaultChannelPromise completedChannelPromise = new DefaultChannelPromise(new EmbeddedChannel());
-            completedChannelPromise.setSuccess();
-            final CompletableFuture<NettyConnection> completedFuture = new CompletableFuture<>();
-            sslFactory.handleConnectionComplete(
-                    completedChannelPromise, createTimeout(), completedFuture, sslNettyChannel);
-            completedFuture.get();
-            fail();
-        } catch (Exception e) {
-            assertTrue(e.getCause() instanceof TslHandshakeFailedException);
-        }
-
-        try {
-            //success with ssl
-            final EmbeddedChannel channel = new EmbeddedChannel();
-            final SslContext sslContext = buildSSLContext();
-            final NettyConnection sslNettyChannel =
-                    new NettyConnection(createConfig(20000, 100), sslContext);
-            sslNettyChannel.setChannel(channel);
-            sslNettyChannel.setTslHandshakeFuture(createTlsHandshakeFuture(true));
-            final PooledNettyConnectionFactory sslFactory =
-                    new PooledNettyConnectionFactory(createSslConfig(20000, 100));
-            final DefaultChannelPromise completedChannelPromise = new DefaultChannelPromise(channel);
-            completedChannelPromise.setSuccess();
-            final CompletableFuture<NettyConnection> completedFuture = new CompletableFuture<>();
-            sslFactory.handleConnectionComplete(
-                    completedChannelPromise, createTimeout(), completedFuture, sslNettyChannel);
-            completedFuture.get();
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
-    @Test
-    @Ignore
     public void handleTimeoutTest() {
-        final PooledNettyConnectionFactory factory =
-                new PooledNettyConnectionFactory(createConfig(20000, 100));
-        final NettyConnection nettyConnection =
+        final NettyConnection connection =
                 new NettyConnection(createConfig(20000, 100), null);
-        final CompletableFuture<NettyConnection> future = new CompletableFuture<>();
         final Channel channel = new EmbeddedChannel();
         final DefaultChannelPromise channelPromise = new DefaultChannelPromise(channel);
         try {
-            factory.handleTimeout(channelPromise, future, nettyConnection);
-            future.get();
+            connection.handleTimeout(channelPromise);
+            connection.getCompletedFuture().get();
             fail();
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof ConnectFailedException);
@@ -266,15 +186,13 @@ public class PooledNettyConnectionFactoryTest {
 
         try {
             final SslContext sslContext = buildSSLContext();
-            final NettyConnection sslNettyConnection =
+            final NettyConnection sslConnection =
                     new NettyConnection(createConfig(20000, 100), sslContext);
-            final PooledNettyConnectionFactory sslFactory =
-                    new PooledNettyConnectionFactory(createSslConfig(20000, 100));
             final DefaultChannelPromise completedChannelPromise = new DefaultChannelPromise(channel);
             completedChannelPromise.setSuccess();
-            final CompletableFuture<NettyConnection> completedFuture = new CompletableFuture<>();
-            sslFactory.handleTimeout(completedChannelPromise, completedFuture, sslNettyConnection);
-            completedFuture.get();
+            sslConnection.setTlsHandshakeFuture(createTlsHandshakeFuture(false));
+            sslConnection.handleTimeout(completedChannelPromise);
+            sslConnection.getCompletedFuture().get();
             fail();
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof TslHandshakeFailedException);

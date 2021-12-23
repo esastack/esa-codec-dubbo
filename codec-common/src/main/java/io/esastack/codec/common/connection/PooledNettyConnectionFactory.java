@@ -15,41 +15,25 @@
  */
 package io.esastack.codec.common.connection;
 
-import esa.commons.concurrent.ThreadFactories;
 import esa.commons.logging.Logger;
 import esa.commons.logging.LoggerFactory;
 import io.esastack.codec.common.exception.ConnectFailedException;
 import io.esastack.codec.common.exception.TslHandshakeFailedException;
-import io.esastack.codec.common.ssl.SslUtils;
 import io.esastack.codec.commons.pool.PooledObjectFactory;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.concurrent.Future;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
-/**
- * 客户端连接池构建Factory
- */
 public class PooledNettyConnectionFactory implements PooledObjectFactory<NettyConnection> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PooledNettyConnectionFactory.class);
-    private static final ThreadFactory THREAD_FACTORY =
-            ThreadFactories.namedThreadFactory("DubboConnect-Timer-", true);
-    private static final Timer INSTANCE = new HashedWheelTimer(THREAD_FACTORY);
 
     private final SslContext sslContext;
-    private final NettyConnectionConfig builder;
+    private final NettyConnectionConfig connectionConfig;
 
-    public PooledNettyConnectionFactory(NettyConnectionConfig builder) {
-        this.builder = builder;
-        this.sslContext = createSslContext(builder);
+    public PooledNettyConnectionFactory(NettyConnectionConfig connectionConfig) {
+        this.connectionConfig = connectionConfig;
+        this.sslContext = createSslContext(connectionConfig);
     }
 
     private SslContext createSslContext(final NettyConnectionConfig builder) {
@@ -63,111 +47,31 @@ public class PooledNettyConnectionFactory implements PooledObjectFactory<NettyCo
         return null;
     }
 
-    public void handleTimeout(final ChannelFuture channelConnectFuture,
-                              final CompletableFuture<NettyConnection> connectionFinishedFuture,
-                              final NettyConnection nettyConnection) {
-        if (!channelConnectFuture.isDone()) {
-            nettyConnection.close();
-            final String errMsg =
-                    "Client connect to the " + builder.getHost() + ":" + builder.getPort() + " timeout.";
-            connectionFinishedFuture.completeExceptionally(new ConnectFailedException(errMsg));
-        } else if (sslContext != null) {
-            Future<Channel> tlsHandshakeFuture = nettyConnection.getTslHandshakeFuture();
-            //This is executed in another thread, tlsHandshakeFuture may be null at the critical time
-            if (tlsHandshakeFuture == null || !tlsHandshakeFuture.isDone()) {
-                nettyConnection.close();
-                final String errMsg =
-                        "Client TSL handshake with " + builder.getHost() + ":" + builder.getPort() + " timeout.";
-                connectionFinishedFuture.completeExceptionally(new TslHandshakeFailedException(errMsg));
-            }
-        }
-    }
-
-    public void handleConnectionComplete(final Future future,
-                                         final Timeout timeout,
-                                         final CompletableFuture<NettyConnection> connectionFinishedFuture,
-                                         final NettyConnection nettyConnection) {
-        if (connectionFinishedFuture.isDone()) {
-            //already timeout yet
-            return;
-        }
-
-        if (!future.isSuccess()) {
-            nettyConnection.close();
-            final String errMsg =
-                    "Client connect to the " + builder.getHost() + ":" + builder.getPort() + " failure.";
-            connectionFinishedFuture.completeExceptionally(new ConnectFailedException(errMsg, future.cause()));
-            //LOGGER.warn(errMsg, future.cause());
-        } else if (sslContext != null) {
-            /*
-             * TSL handshake future is set when init the Channel; because the init processing is async,
-             * so it may be null at the create time, and because the connect processing is after the init
-             * processing, so when the listeners are called, the init processing is completed, so the tls
-             * handshake future is definitely assigned.
-             */
-            Future<Channel> tlsHandshakeFuture = nettyConnection.getTslHandshakeFuture();
-            tlsHandshakeFuture.addListener(handshakeFuture ->
-                    handleTlsComplete(handshakeFuture, timeout, connectionFinishedFuture, nettyConnection));
-        } else {
-            timeout.cancel();
-            connectionFinishedFuture.complete(nettyConnection);
-            LOGGER.info("Client connect to the " + builder.getHost() + ":" + builder.getPort() + " success.");
-        }
-    }
-
-    void handleTlsComplete(final Future<?> tlsHandshakeFuture,
-                           final Timeout timeout,
-                           final CompletableFuture<NettyConnection> connectionFinishedFuture,
-                           final NettyConnection nettyConnection) {
-        timeout.cancel();
-        if (tlsHandshakeFuture.isSuccess()) {
-            //save TLS certificate
-            SslUtils.extractSslPeerCertificate(nettyConnection.getChannel());
-            connectionFinishedFuture.complete(nettyConnection);
-            LOGGER.info("Client TSL handshake with the " + builder.getHost() + ":" +
-                    builder.getPort() + " success.");
-        } else {
-            nettyConnection.close();
-            final String errMsg = "Client TSL handshake with the " + builder.getHost() + ":" +
-                    builder.getPort() + " failure.";
-            connectionFinishedFuture.completeExceptionally(
-                    new TslHandshakeFailedException(errMsg, tlsHandshakeFuture.cause()));
-        }
-    }
-
-    public NettyConnection connectSync(final NettyConnection channel, final Throwable throwable) {
+    public NettyConnection fallback2Normal(final NettyConnection connection, final Throwable throwable) {
         if (throwable instanceof TslHandshakeFailedException) {
             LOGGER.error("TLS handle shake failed, retry connecting to "
-                    + builder.getHost() + ":" + builder.getPort() + " without tls.", throwable);
-            NettyConnection ch = new NettyConnection(builder, null);
-            ch.connect();
+                    + connectionConfig.getHost() + ":" + connectionConfig.getPort() + " without tls.", throwable);
+            final NettyConnection ch = new NettyConnection(connectionConfig, null);
+            ch.connectSync();
             return ch;
         } else if (throwable instanceof ConnectFailedException) {
             throw (ConnectFailedException) throwable;
         } else if (throwable != null) {
             throw new ConnectFailedException(throwable);
         } else {
-            return channel;
+            return connection;
         }
     }
 
     @Override
     public CompletableFuture<NettyConnection> create() {
-        final CompletableFuture<NettyConnection> connectionFinishedFuture = new CompletableFuture<>();
-        final NettyConnection nettyConnection = new NettyConnection(this.builder, this.sslContext);
-        final ChannelFuture connectFuture = nettyConnection.asyncConnect();
-        final Timeout timeout = INSTANCE.newTimeout(to ->
-                        handleTimeout(connectFuture, connectionFinishedFuture, nettyConnection),
-                builder.getConnectTimeout(), TimeUnit.MILLISECONDS);
-
-        connectFuture.addListener(future ->
-                handleConnectionComplete(future, timeout, connectionFinishedFuture, nettyConnection));
-
-        if (!builder.isTlsFallback2Normal()) {
-            return connectionFinishedFuture;
+        final NettyConnection connection = new NettyConnection(this.connectionConfig, this.sslContext);
+        final CompletableFuture<NettyConnection> future = connection.connect().thenApply(aBoolean -> connection);
+        if (!connectionConfig.isTlsFallback2Normal()) {
+            return future;
         } else {
             //Fallback to normal connection
-            return connectionFinishedFuture.handle(this::connectSync);
+            return future.handle(this::fallback2Normal);
         }
     }
 
