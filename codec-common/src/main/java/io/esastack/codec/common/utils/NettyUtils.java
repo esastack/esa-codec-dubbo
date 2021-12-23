@@ -23,6 +23,7 @@ import io.esastack.codec.common.exception.SerializationException;
 import io.esastack.codec.common.exception.UnknownProtocolException;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import io.esastack.codec.serialization.api.SerializeFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -49,7 +50,10 @@ public class NettyUtils {
             try {
                 Serialization serialization = SerializeFactory.getSerialization(seriType);
                 if (serialization == null) {
-                    throw new SerializationException("unsupported serialization type:" + seriType);
+                    String msg = "Unsupported serialization type, id=" + seriType + ", name=" +
+                            SerializeConstants.seriNames.get(seriType) +
+                            ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                    throw new SerializationException(msg);
                 }
                 byteBufOutputStream = new ByteBufOutputStream(Unpooled.buffer());
                 out = serialization.serialize(byteBufOutputStream);
