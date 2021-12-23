@@ -54,6 +54,8 @@ public class ProtobufUtil {
         cache.put(defaultInstance.getClass(), new MessageBuilder<>(defaultInstance));
     }
 
+    //TODO, in esa cabin scenes, clazz is loaded by biz, MessageLite is loaded by lib;
+    //Currently, should add -Dcustom.import.pkg=com.google.protobuf to import all protobuf classes.
     public static boolean isNotSupport(Class<?> clazz) {
         return clazz == null || !MessageLite.class.isAssignableFrom(clazz);
     }
