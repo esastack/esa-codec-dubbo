@@ -85,7 +85,7 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
             return true;
         }
         if (builder.waitCreateWhenLastTryAcquire) {
-            waitForCreated(acquireTask);
+            acquireTask.waitForCreated();
             return acquireTask.isAcquired();
         }
         return false;
@@ -162,7 +162,7 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
         }
 
         if (this.builder.waitCreateWhenLastTryAcquire) {
-            waitForCreated(acquireTask);
+            acquireTask.waitForCreated();
             if (acquireTask.isCompleted()) {
                 if (acquireTask.isAcquired()) {
                     future.complete(acquireTask.getResult());
@@ -202,22 +202,6 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
             return this.builder.maxPoolSize - 1;
         }
         return index - 1;
-    }
-
-    /**
-     * wait create completed in the last try acquire.
-     */
-    private void waitForCreated(final AcquireTask acquireTask) {
-        final int timeout = builder.getMaxWaitCreateTime();
-        synchronized (acquireTask) {
-            final long start = System.currentTimeMillis();
-            while (!acquireTask.isCompleted() && System.currentTimeMillis() - start < timeout) {
-                try {
-                    acquireTask.wait(start + timeout - System.currentTimeMillis());
-                } catch (Throwable ignored) {
-                }
-            }
-        }
     }
 
     private AcquireTask acquireFromPool(final int index) {
@@ -358,6 +342,19 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
             completed = true;
             synchronized (this) {
                 notifyAll();
+            }
+        }
+
+        public void waitForCreated() {
+            final int timeout = builder.getMaxWaitCreateTime();
+            synchronized (this) {
+                final long start = System.currentTimeMillis();
+                while (!completed && System.currentTimeMillis() - start < timeout) {
+                    try {
+                        wait(start + timeout - System.currentTimeMillis());
+                    } catch (Throwable ignored) {
+                    }
+                }
             }
         }
 

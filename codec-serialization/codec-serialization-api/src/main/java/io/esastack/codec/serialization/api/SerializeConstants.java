@@ -15,6 +15,9 @@
  */
 package io.esastack.codec.serialization.api;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public interface SerializeConstants {
     byte HESSIAN2_SERIALIZATION_ID = 2;
     byte JSON_SERIALIZATION_ID = 5;
@@ -28,4 +31,36 @@ public interface SerializeConstants {
 
     byte PROTOBUF_SERIALIZATION_ID = 22;
     byte PROTOBUF_SINGLE_SERIALIZATION_ID = 44;
+
+    Map<Byte, String> seriNames = new HashMap<Byte, String>() {
+        {
+            put(HESSIAN2_SERIALIZATION_ID, "hessian2");
+            put(JSON_SERIALIZATION_ID, "json");
+            put(FASTJSON_SERIALIZATION_ID, "fastjson");
+            put(KRYO_SERIALIZATION_ID, "kryo");
+            put(FST_SERIALIZATION_ID, "fst");
+            put(PROTOSTUFF_SERIALIZATION_ID, "protostuff");
+            put(AVRO_SERIALIZATION_ID, "avro");
+            put(GSON_SERIALIZATION_ID, "gson");
+            put(PBMIX_SERIALIZATION_ID, "pbmix");
+            put(PROTOBUF_SERIALIZATION_ID, "protobuf");
+            put(PROTOBUF_SINGLE_SERIALIZATION_ID, "proto");
+        }
+    };
+
+    Map<Byte, String> seriTypes = new HashMap<Byte, String>() {
+        {
+            put(HESSIAN2_SERIALIZATION_ID, "x-application/hessian2");
+            put(JSON_SERIALIZATION_ID, "x-application/json");
+            put(FASTJSON_SERIALIZATION_ID, "x-application/fastjson");
+            put(KRYO_SERIALIZATION_ID, "x-application/kryo");
+            put(FST_SERIALIZATION_ID, "x-application/fst");
+            put(PROTOSTUFF_SERIALIZATION_ID, "x-application/protostuff");
+            put(AVRO_SERIALIZATION_ID, "x-application/avro");
+            put(GSON_SERIALIZATION_ID, "x-application/gson");
+            put(PBMIX_SERIALIZATION_ID, "x-application/pbmix");
+            put(PROTOBUF_SERIALIZATION_ID, "x-application/protobuf");
+            put(PROTOBUF_SINGLE_SERIALIZATION_ID, "x-application/proto");
+        }
+    };
 }

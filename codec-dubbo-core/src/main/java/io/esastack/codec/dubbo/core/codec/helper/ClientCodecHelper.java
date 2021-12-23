@@ -23,10 +23,7 @@ import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.utils.ReflectUtils;
-import io.esastack.codec.serialization.api.DataInputStream;
-import io.esastack.codec.serialization.api.DataOutputStream;
-import io.esastack.codec.serialization.api.Serialization;
-import io.esastack.codec.serialization.api.SerializeFactory;
+import io.esastack.codec.serialization.api.*;
 import io.netty.buffer.*;
 
 import java.io.ByteArrayInputStream;
@@ -60,7 +57,10 @@ public class ClientCodecHelper {
         try {
             Serialization serialization = SerializeFactory.getSerialization(invocation.getSeriType());
             if (serialization == null) {
-                throw new SerializationException("Unsupported serialization type:" + request.getHeader().getSeriType());
+                String msg = "Unsupported serialization type, id=" + request.getHeader().getSeriType() + ", name=" +
+                        SerializeConstants.seriNames.get(request.getHeader().getSeriType()) +
+                        ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                throw new SerializationException(msg);
             }
 
             byteBufOutputStream = new ByteBufOutputStream(alloc.buffer());
@@ -126,8 +126,10 @@ public class ClientCodecHelper {
         try {
             Serialization serialization = SerializeFactory.getSerialization(response.getHeader().getSeriType());
             if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" +
-                        response.getHeader().getSeriType());
+                String msg = "Unsupported serialization type, id=" + response.getHeader().getSeriType() + ", name=" +
+                        SerializeConstants.seriNames.get(response.getHeader().getSeriType()) +
+                        ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                throw new SerializationException(msg);
             }
 
             byteBufInputStream = new ByteBufInputStream(byteBuf);
@@ -177,7 +179,10 @@ public class ClientCodecHelper {
         try {
             Serialization serialization = SerializeFactory.getSerialization(header.getSeriType());
             if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" + header.getSeriType());
+                String msg = "Unsupported serialization type, id=" + header.getSeriType() + ", name=" +
+                        SerializeConstants.seriNames.get(header.getSeriType()) +
+                        ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                throw new SerializationException(msg);
             }
 
             inputStream = new ByteArrayInputStream(body);

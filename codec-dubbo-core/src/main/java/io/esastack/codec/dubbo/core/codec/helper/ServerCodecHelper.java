@@ -25,10 +25,7 @@ import io.esastack.codec.dubbo.core.RpcInvocation;
 import io.esastack.codec.dubbo.core.codec.DubboHeader;
 import io.esastack.codec.dubbo.core.codec.DubboMessage;
 import io.esastack.codec.dubbo.core.utils.ReflectUtils;
-import io.esastack.codec.serialization.api.DataInputStream;
-import io.esastack.codec.serialization.api.DataOutputStream;
-import io.esastack.codec.serialization.api.Serialization;
-import io.esastack.codec.serialization.api.SerializeFactory;
+import io.esastack.codec.serialization.api.*;
 import io.netty.buffer.*;
 
 import java.util.HashMap;
@@ -60,7 +57,10 @@ public class ServerCodecHelper {
 
         Serialization serialization = SerializeFactory.getSerialization(rpcResult.getSeriType());
         if (serialization == null) {
-            throw new SerializationException("unsupported serialization type:" + header.getSeriType());
+            String msg = "Unsupported serialization type, id=" + rpcResult.getSeriType() + ", name=" +
+                    SerializeConstants.seriNames.get(rpcResult.getSeriType()) +
+                    ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+            throw new SerializationException(msg);
         }
 
         ByteBufOutputStream byteBufOutputStream = null;
@@ -131,8 +131,10 @@ public class ServerCodecHelper {
         try {
             Serialization serialization = SerializeFactory.getSerialization(request.getHeader().getSeriType());
             if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" +
-                        request.getHeader().getSeriType());
+                String msg = "Unsupported serialization type, id=" + request.getHeader().getSeriType() + ", name=" +
+                        SerializeConstants.seriNames.get(request.getHeader().getSeriType()) +
+                        ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                throw new SerializationException(msg);
             }
 
             if (request.getBody() == null) {

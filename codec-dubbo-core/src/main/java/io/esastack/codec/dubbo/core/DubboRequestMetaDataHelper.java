@@ -44,7 +44,10 @@ public class DubboRequestMetaDataHelper {
             byte seriType = request.getHeader().getSeriType();
             Serialization serialization = SerializeFactory.getSerialization(seriType);
             if (serialization == null) {
-                throw new SerializationException("unsupported serialization type:" + seriType);
+                String msg = "Unsupported serialization type, id=" + seriType + ", name=" +
+                        SerializeConstants.seriNames.get(seriType) +
+                        ", maybe it not included in the classpath, please check your (maven/gradle) dependencies!";
+                throw new SerializationException(msg);
             }
             byteBufInputStream = new ByteBufInputStream(request.getBody());
             in = serialization.deserialize(byteBufInputStream);
