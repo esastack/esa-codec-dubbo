@@ -14,7 +14,7 @@ Codec-dubbo is a binary codec framework for dubbo protocol
 - Support Dubbo Client
 - Multiple serialization protocols support
 
-##  SDK instructions
+##  Quick Start
 #### 1、Introduce Maven dependencies
 ```xml  
 <!-- commons.version >= 0.1.1 --> 
@@ -52,7 +52,7 @@ Codec-dubbo is a binary codec framework for dubbo protocol
     <version>${netty-tcnative.version}</version>
 </dependency>
 ```
- #### 2、Dubbo Client SDK instructions
+ #### 2、Quick Start for Dubbo Client
  ```java
 public class DubboSDKClient {
     public static void main(String[] args) throws Exception {
@@ -81,6 +81,8 @@ public class DubboSDKClient {
         rpcInvocation.setArguments(new String[]{"dubbo"});
         rpcInvocation.setInterfaceName("org.apache.dubbo.demo.DemoService");
         rpcInvocation.setReturnType(String.class);
+        // set serialization type
+        // rpcInvocation.setSeriType(KRYO_SERIALIZATION_ID);
 
         Map<String, String> attachments = new HashMap<>();
         rpcInvocation.setAttachments(attachments);
@@ -101,9 +103,7 @@ public class DubboSDKClient {
 }
 ```
 
- #### 3、 Dubbo Server SDK instructions
-
-
+ #### 3、 Quick Start for Dubbo Server
 ```java
 public class ServerDemo {
 
@@ -189,4 +189,73 @@ public class ServerDemo {
         nettyDubboServer.start();
     }
 }
+```
+## Serialization
+#### 1、 Supported serialization
+The default serialization method is **hessian2**, and the following serialization methods are also supported:
+- fastjson
+- fst
+- json(jackson)
+- kryo        
+- protobuf    
+- protostuff 
+
+#### 2、 Examples of supported serialization usage(take kryo as an example)
+1. Introduce Maven dependencies
+```xml
+<dependency>
+    <groupId>io.esastack</groupId>
+    <artifactId>codec-serialization-kryo</artifactId>
+    <version>${mvn.version}</version>
+</dependency>
+```
+
+2. Set serialization method
+Before we send a request, we need to set serialization type of this request as follows:
+```java
+rpcInvocation.setSeriType(KRYO_SERIALIZATION_ID);
+```
+We can get the numbers corresponding to all serialization methods from the **SerializeConstants** interface
+#### 3、 Custom serialization
+If the existing serialization method cannot meet the needs, you can customize the serialization method through SPI.
+1. Implement serialization class
+```java
+public class TestSerialization implements Serialization {
+
+    @Override
+    public byte getSeriTypeId() {
+        return TEST_SERIALIZATION_ID;
+    }
+
+    @Override
+    public String getContentType() {
+        return "x-application/test";
+    }
+
+    @Override
+    public String getSeriName() {
+        return "test";
+    }
+
+    // We need to implement TestDataOutputStream and TestDataInputStream
+    @Override
+    public DataOutputStream serialize(OutputStream out) throws IOException {
+        return new TestDataOutputStream(out);
+    }
+
+    @Override
+    public DataInputStream deserialize(InputStream is) throws IOException {
+        return new TestDataInputStream(is);
+    }
+}
+```
+
+
+2. Add SPI file
+
+Add the SPI configuration file in the module's resources to activate this serialization, the file path and file name: 
+`META-INF/esa/io.esastack.codec.serialization.api.Serialization`
+the file content is as follows:
+```
+test=xxx.xxx.xxx.TestSerialization
 ```
