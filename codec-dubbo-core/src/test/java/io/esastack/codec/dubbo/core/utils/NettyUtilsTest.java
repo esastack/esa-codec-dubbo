@@ -85,7 +85,8 @@ public class NettyUtilsTest {
         final Map<String, String> ttfbAttachments = NettyUtils.extractTtfbKey(channel);
 
         Assert.assertEquals(String.valueOf(ttfbAttr.get()), ttfbAttachments.get(Constants.TRACE.TTFB_KEY));
-        Assert.assertEquals(String.valueOf(ttfbCompleteAttr.get()), ttfbAttachments.get(Constants.TRACE.TTFB_COMPLETE_KEY));
+        Assert.assertEquals(String.valueOf(ttfbCompleteAttr.get()),
+                ttfbAttachments.get(Constants.TRACE.TTFB_COMPLETE_KEY));
 
     }
 
