@@ -15,9 +15,10 @@
  */
 package io.esastack.codec.common.exception;
 
+import io.esastack.codec.common.constant.Constants;
 import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExceptionTest {
 
@@ -107,5 +108,6 @@ public class ExceptionTest {
         assertEquals("connect failed", exception.getMessage());
         assertEquals("connect failed", exception2.getMessage());
         assertEquals(EXCEPTION, exception2.getCause());
+        assertEquals("CONNECTION_NAME", Constants.CHANNEL_ATTR_KEY.CONNECTION_NAME.name());
     }
 }
