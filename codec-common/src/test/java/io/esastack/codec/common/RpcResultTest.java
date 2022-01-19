@@ -19,7 +19,8 @@ import org.junit.Test;
 
 import java.util.HashMap;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class RpcResultTest {
 
@@ -43,6 +44,13 @@ public class RpcResultTest {
         rpcResult.setAttachment("key", null);
         rpcResult.setAttachment("key", "value");
         assertEquals("value", rpcResult.getAttachments().get("key"));
+
+        Exception exception1 = new RuntimeException();
+        rpcResult.setValue("new");
+        rpcResult.setException(exception1);
+
+        assertEquals("new", rpcResult.getValue());
+        assertEquals(exception1, rpcResult.getException());
     }
 
 }
