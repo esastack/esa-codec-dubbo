@@ -39,6 +39,10 @@ public class SingleProtobufSerializationTest {
 
     @Test
     public void testPBObject() throws Exception {
+        assertEquals(PROTOBUF_SINGLE_SERIALIZATION_ID, serialization.getSeriTypeId());
+        assertEquals("x-application/proto", serialization.getContentType());
+        assertEquals("proto", serialization.getSeriName());
+
         ProtobufUtil.register(TestPB.PBRequestType.getDefaultInstance());
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);

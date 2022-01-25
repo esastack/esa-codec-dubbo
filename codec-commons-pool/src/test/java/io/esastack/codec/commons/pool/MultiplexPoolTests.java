@@ -25,7 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MultiplexPoolTests {
 
@@ -105,7 +108,6 @@ public class MultiplexPoolTests {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testAcuqireAsync() throws Exception {
         MultiplexPool<String> pool = new DefaultMultiplexPool.Builder<String>()
                 .maxPoolSize(1)
@@ -248,7 +250,6 @@ public class MultiplexPoolTests {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void test_maxWaitCreateTime() {
         DefaultMultiplexPool<String> pool = new DefaultMultiplexPool.Builder<String>()
                 .maxPoolSize(1)
@@ -265,6 +266,35 @@ public class MultiplexPoolTests {
             assertTrue(throwable.getCause() instanceof AcquireFailedException);
             assertTrue(throwable.getCause().getMessage().startsWith("Acquire timeout"));
         }
+    }
+
+    @Test
+    public void testAcquireFailedException() {
+        RuntimeException exception = new RuntimeException();
+        AcquireFailedException exception1 = new AcquireFailedException("test");
+        AcquireFailedException exception2 = new AcquireFailedException("test", exception);
+        assertEquals("test", exception1.getMessage());
+        assertEquals("test", exception2.getMessage());
+        assertEquals(exception, exception2.getCause());
+    }
+
+    @Test
+    public void testInit() {
+        DefaultMultiplexPool.Builder<String> builder = new DefaultMultiplexPool.Builder<>();
+        builder.maxPoolSize(-1);
+        assertThrows(IllegalArgumentException.class, builder::build);
+
+        builder.maxPoolSize(5);
+        builder.maxRetryTimes(-1);
+        assertThrows(IllegalArgumentException.class, builder::build);
+
+        builder.maxRetryTimes(2);
+        builder.factory(null);
+        assertThrows(IllegalArgumentException.class, builder::build);
+
+        builder.factory(new ValidateFalsePoolFactory());
+        builder.init(true);
+        builder.build();
     }
 
     private static class Worker implements Runnable {
@@ -295,9 +325,9 @@ public class MultiplexPoolTests {
         }
     }
 
-    private class ValidateFalsePoolFactory implements PooledObjectFactory<String> {
+    private static class ValidateFalsePoolFactory implements PooledObjectFactory<String> {
 
-        private AtomicInteger index = new AtomicInteger();
+        private final AtomicInteger index = new AtomicInteger();
 
         @Override
         public CompletableFuture<String> create() {

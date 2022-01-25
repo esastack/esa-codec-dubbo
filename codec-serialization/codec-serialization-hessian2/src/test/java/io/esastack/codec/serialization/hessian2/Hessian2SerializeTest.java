@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,6 +77,7 @@ public class Hessian2SerializeTest {
         Assert.assertEquals(model.name, model2.getName());
         Assert.assertEquals("test", t.getMessage());
         Assert.assertEquals(model.name, ((Model) map1.get("key")).name);
+        Assert.assertEquals("x-application/hessian2", serialization.getContentType());
         dataInputStream.close();
         byteArrayInputStream.close();
     }
@@ -92,7 +94,7 @@ public class Hessian2SerializeTest {
     public void readObjectTest() throws Exception {
 
         Model model = new Model();
-        model.setName("wangwei");
+        model.setName("foo");
         Model result = deserializeObj(model, null);
         Assert.assertEquals(result.getName(), model.getName());
         result = deserializeObj(model, Object.class);
@@ -101,7 +103,7 @@ public class Hessian2SerializeTest {
         Assert.assertEquals(result.getName(), model.getName());
 
         SubModel subModel = new SubModel();
-        subModel.setName("wangwei");
+        subModel.setName("foo");
         subModel.setAge(10);
         SubModel subResult = deserializeObj(subModel, null);
         Assert.assertEquals(subResult.getAge(), subModel.getAge());
@@ -109,7 +111,12 @@ public class Hessian2SerializeTest {
         Assert.assertEquals(subResult.getAge(), subModel.getAge());
         subResult = deserializeObj(subModel, Model.class);
         Assert.assertEquals(subResult.getAge(), subModel.getAge());
+    }
 
+    @Test
+    public void testClose() throws IOException {
+        Hessian2DataOutputStream stream = new Hessian2DataOutputStream(new ByteArrayOutputStream());
+        stream.close();
     }
 
     private <T> T deserializeObj(final Object obj, final Class clazz) throws Exception {

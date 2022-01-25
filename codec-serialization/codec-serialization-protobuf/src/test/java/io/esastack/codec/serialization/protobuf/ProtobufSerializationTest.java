@@ -19,8 +19,10 @@ import com.google.protobuf.ByteString;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
 import io.esastack.codec.serialization.protobuf.wrapper.TestPB;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -30,11 +32,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ProtobufSerializationTest {
 
-    private Serialization serialization = new ProtobufSerialization();
+    private final Serialization serialization = new ProtobufSerialization();
+
+    @Test
+    public void test() {
+        Assert.assertEquals(SerializeConstants.PROTOBUF_SERIALIZATION_ID, serialization.getSeriTypeId());
+        Assert.assertEquals("x-application/protobuf", serialization.getContentType());
+        Assert.assertEquals("protobuf", serialization.getSeriName());
+    }
 
     @Test
     public void testNull() throws Exception {

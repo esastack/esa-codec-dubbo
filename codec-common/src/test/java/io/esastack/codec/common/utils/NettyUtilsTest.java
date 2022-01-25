@@ -33,6 +33,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NettyUtilsTest {
@@ -58,12 +59,13 @@ public class NettyUtilsTest {
 
         EmbeddedChannel channel = new EmbeddedChannel();
         NettyUtils.setChannelAttr(channel, key, value);
-        Assert.assertNull(NettyUtils.getChannelAttr(channel, null));
         Assert.assertEquals(value, NettyUtils.getChannelAttr(channel, key));
 
         EmbeddedChannel channel2 = new EmbeddedChannel();
         NettyUtils.setChannelAttr(channel2, AttributeKey.valueOf(key), value);
+        NettyUtils.setAttachmentsTtfbKey(null, null);
         Assert.assertEquals(value, NettyUtils.getChannelAttr(channel2, key));
+        assertEquals("", NettyUtils.parseRemoteAddress(null));
     }
 
     @Test

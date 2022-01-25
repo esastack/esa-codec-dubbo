@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.esastack.codec.common.server;
+package io.esastack.codec.dubbo.core;
 
-import io.netty.channel.ChannelOption;
 import org.junit.Test;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-public class NettyServerTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class RpcInvocationTest {
     @Test
-    public void testNettyServer() {
-        NettyServerConfig config = new NettyServerConfig();
-        config.setUnixDomainSocketFile("test");
+    public void test() {
+        RpcInvocation invocation = new RpcInvocation();
+        invocation.setReturnType(String.class);
+        Map<String, String> map = new HashMap<>();
+        map.put("k1", "v1");
+        invocation.setAttachments(map);
 
-        config.setUnixDomainSocketFile(null);
-        config.setChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        config.setChildChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        CustomNettyServer server = new CustomNettyServer(config);
-        server.start();
-        server.shutdown();
+        assertEquals(String.class, invocation.getReturnType());
+        assertEquals(1, invocation.getAttachments().size());
     }
 }

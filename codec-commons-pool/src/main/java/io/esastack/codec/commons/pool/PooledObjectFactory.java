@@ -25,21 +25,23 @@ public interface PooledObjectFactory<T> {
     /**
      * Async create pool element.
      *
-     * @return
+     * @return CompletableFuture —— result of create
      */
     CompletableFuture<T> create();
 
     /**
      * Async destroy the given element object.
      *
-     * @return
+     * @param object object you want to destroy
+     * @return CompletableFuture —— result of destroy
      */
     CompletableFuture<Void> destroy(T object);
 
     /**
      * Check the element is valid or not.
      *
-     * @return
+     * @param object object that you want to validate
+     * @return true if object is validated
      */
     Boolean validate(T object);
 }

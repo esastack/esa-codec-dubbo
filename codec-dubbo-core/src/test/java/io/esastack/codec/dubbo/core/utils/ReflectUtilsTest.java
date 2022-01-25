@@ -18,6 +18,8 @@ package io.esastack.codec.dubbo.core.utils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class ReflectUtilsTest {
 
     @Test
@@ -42,5 +44,10 @@ public class ReflectUtilsTest {
         Assert.assertEquals(float.class, ReflectUtils.desc2classArray(ReflectUtils.getDesc(float.class))[0]);
         Assert.assertEquals(long.class, ReflectUtils.desc2classArray(ReflectUtils.getDesc(long.class))[0]);
         Assert.assertEquals(short.class, ReflectUtils.desc2classArray(ReflectUtils.getDesc(short.class))[0]);
+
+        Thread.currentThread().setContextClassLoader(null);
+        Assert.assertEquals(0, ReflectUtils.desc2classArray("").length);
+        Assert.assertEquals("", ReflectUtils.getDesc(new Class[0]));
+        assertEquals(0, ReflectUtils.desc2classArray("[Ljava.lang.Object;").length);
     }
 }

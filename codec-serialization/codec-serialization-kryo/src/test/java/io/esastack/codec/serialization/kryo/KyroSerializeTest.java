@@ -17,6 +17,7 @@ package io.esastack.codec.serialization.kryo;
 
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import io.esastack.codec.serialization.kryo.utils.ReflectionUtils;
 import org.junit.Test;
 
@@ -47,6 +48,8 @@ public class KyroSerializeTest {
         KryoSerialization serialization = new KryoSerialization();
 
         assertEquals("x-application/kryo", serialization.getContentType());
+        assertEquals(SerializeConstants.KRYO_SERIALIZATION_ID, serialization.getSeriTypeId());
+        assertEquals("kryo", serialization.getSeriName());
 
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
