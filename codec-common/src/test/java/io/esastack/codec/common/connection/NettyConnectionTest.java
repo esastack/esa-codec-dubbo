@@ -18,6 +18,7 @@ package io.esastack.codec.common.connection;
 import io.esastack.codec.common.exception.ConnectFailedException;
 import io.esastack.codec.common.server.CustomNettyServer;
 import io.esastack.codec.common.server.NettyServerConfig;
+import io.esastack.codec.common.ssl.SslUtils;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -123,6 +124,9 @@ public class NettyConnectionTest {
         assertNotNull(nettyConnection.getName());
         nettyConnection.writeAndFlush("test");
         assertEquals("test", promise.get());
+
+        SslUtils.extractSslPeerCertificate(nettyConnection.getChannel());
+        SslUtils.extractSslPeerCertificate(nettyConnection.getChannel(), null);
 
         nettyConnection.close();
     }

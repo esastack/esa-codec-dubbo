@@ -18,6 +18,7 @@ package io.esastack.codec.serialization.protobuf;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import io.esastack.codec.serialization.protobuf.entity.User;
 import io.esastack.codec.serialization.protobuf.entity.UserProto2Entity;
 import io.esastack.codec.serialization.protobuf.entity.UserProto3Entity;
@@ -29,11 +30,21 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PbmixSerializationTest {
 
-    private Serialization serialization = new PbmixSerialization();
+    private final Serialization serialization = new PbmixSerialization();
+
+    @Test
+    public void test() {
+        assertEquals(SerializeConstants.PBMIX_SERIALIZATION_ID, serialization.getSeriTypeId());
+        assertEquals("x-application/pb", serialization.getContentType());
+        assertEquals("pbmix", serialization.getSeriName());
+    }
 
     @Test
     public void test_proto2_messageLite() {

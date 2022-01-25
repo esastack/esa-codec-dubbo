@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.esastack.codec.common.server;
+package io.esastack.codec.serialization.protostuff.delegate;
 
-import io.netty.channel.ChannelOption;
+import io.protostuff.WireFormat;
 import org.junit.Test;
 
-import java.util.Collections;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NettyServerTest {
+public class TimeDelegateTest {
+
     @Test
-    public void testNettyServer() {
-        NettyServerConfig config = new NettyServerConfig();
-        config.setUnixDomainSocketFile("test");
+    public void testTimeDelegate() {
+        TimeDelegate delegate = new TimeDelegate();
+        assertEquals(WireFormat.FieldType.FIXED64, delegate.getFieldType());
+    }
 
-        config.setUnixDomainSocketFile(null);
-        config.setChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        config.setChildChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        CustomNettyServer server = new CustomNettyServer(config);
-        server.start();
-        server.shutdown();
-
+    @Test
+    public void testTimestampDelegate() {
+        TimestampDelegate delegate = new TimestampDelegate();
+        assertEquals(WireFormat.FieldType.FIXED64, delegate.getFieldType());
     }
 }

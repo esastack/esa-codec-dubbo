@@ -17,6 +17,7 @@ package io.esastack.codec.serialization.protostuff;
 
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,6 +43,11 @@ public class ProtostuffSerializeTest {
     public void test() throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ProtostuffSerialization serialization = new ProtostuffSerialization();
+
+        Assert.assertEquals(SerializeConstants.PROTOSTUFF_SERIALIZATION_ID, serialization.getSeriTypeId());
+        Assert.assertEquals("x-application/protostuff", serialization.getContentType());
+        Assert.assertEquals("protostuff", serialization.getSeriName());
+
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
