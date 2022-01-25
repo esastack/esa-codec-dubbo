@@ -32,6 +32,5 @@ public class NettyServerTest {
         CustomNettyServer server = new CustomNettyServer(config);
         server.start();
         server.shutdown();
-
     }
 }

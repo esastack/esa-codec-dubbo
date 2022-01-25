@@ -127,7 +127,6 @@ public class NettyConnectionTest {
 
         SslUtils.extractSslPeerCertificate(nettyConnection.getChannel());
         SslUtils.extractSslPeerCertificate(nettyConnection.getChannel(), null);
-
         nettyConnection.close();
     }
 
