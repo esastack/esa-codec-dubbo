@@ -70,12 +70,12 @@ public class FstSerializeTest {
 
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
-        byte byte1 = dataInputStream.readByte();
-        byte[] bytes1 = dataInputStream.readBytes();
-        byte[] bytes2 = dataInputStream.readBytes();
-        byte[] bytes3 = dataInputStream.readBytes();
-        int int1 = dataInputStream.readInt();
-        Long long1 = dataInputStream.readObject(Long.class);
+        final byte byte1 = dataInputStream.readByte();
+        final byte[] bytes1 = dataInputStream.readBytes();
+        final byte[] bytes2 = dataInputStream.readBytes();
+        final byte[] bytes3 = dataInputStream.readBytes();
+        final int int1 = dataInputStream.readInt();
+        final Long long1 = dataInputStream.readObject(Long.class);
         final String utf8 = dataInputStream.readUTF();
         final Model model1 = dataInputStream.readObject(Model.class);
         final Model model2 = dataInputStream.readObject(Model.class);

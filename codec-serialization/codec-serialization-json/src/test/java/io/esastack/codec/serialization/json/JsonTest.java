@@ -95,62 +95,6 @@ public class JsonTest {
     }
 
     @Test
-    public void testJson() throws IOException, ClassNotFoundException {
-        System.setProperty("typeAsJsonProperty", "false");
-        JsonSerialization serialization = new JsonSerialization();
-
-        assertEquals(SerializeConstants.JSON_SERIALIZATION_ID, serialization.getSeriTypeId());
-        assertEquals("x-application/json", serialization.getContentType());
-        assertEquals("json", serialization.getSeriName());
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
-        serialize.writeInt(0);
-        serialize.writeByte((byte) 97);
-        serialize.writeUTF("0");
-        serialize.writeObject("json");
-        serialize.writeObject("json");
-        serialize.writeObject("json");
-        serialize.writeBytes(new byte[]{97, 98});
-        serialize.flush();
-        byte[] bytes = byteArrayOutputStream.toByteArray();
-        serialize.close();
-
-        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
-        assertEquals(0, deserialize.readInt());
-        assertEquals((byte) 97, deserialize.readByte());
-        assertEquals("0", deserialize.readUTF());
-        assertEquals("json", deserialize.readObject(String.class));
-        assertEquals("json", deserialize.readObject(String.class, null));
-        assertEquals("json", deserialize.readObject(Integer.class, String.class));
-        assertEquals(2, deserialize.readBytes().length);
-
-        deserialize.close();
-    }
-
-    @Test
-    public void testTypeAsJsonProperty() throws IOException, ClassNotFoundException {
-        System.setProperty("typeAsJsonProperty", "true");
-
-        JsonSerialization serialization = new JsonSerialization();
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
-        serialize.writeObject("json");
-        serialize.writeObject("json");
-        serialize.writeObject("json");
-        serialize.writeBytes(new byte[]{97, 98});
-        serialize.flush();
-        byte[] bytes = byteArrayOutputStream.toByteArray();
-        serialize.close();
-
-        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
-        assertEquals("json", deserialize.readObject(String.class));
-        assertEquals("json", deserialize.readObject(String.class, null));
-        assertEquals("json", deserialize.readObject(Integer.class, String.class));
-    }
-
-    @Test
     public void test() throws Exception {
         System.setProperty("typeAsJsonProperty", "false");
         final List<ModelOne<ModelTwo>> list = new ArrayList<>();

@@ -83,7 +83,7 @@ public class KyroSerializeTest {
         byte[] bytes2 = dataInputStream.readBytes();
         byte[] bytes3 = dataInputStream.readBytes();
         int int1 = dataInputStream.readInt();
-        Long long1 = dataInputStream.readObject(Long.class);
+        final Long long1 = dataInputStream.readObject(Long.class);
         assertEquals((byte) 1, byte1);
         assertEquals((byte) 1, bytes1[0]);
         assertEquals(0, bytes2.length);
