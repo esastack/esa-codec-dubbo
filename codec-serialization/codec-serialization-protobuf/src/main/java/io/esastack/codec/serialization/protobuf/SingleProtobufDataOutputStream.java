@@ -15,7 +15,11 @@
  */
 package io.esastack.codec.serialization.protobuf;
 
-import com.google.protobuf.*;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.BytesValue;
+import com.google.protobuf.Int32Value;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.StringValue;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
 import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
@@ -36,7 +40,6 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
     public void writeUTF(String v) throws IOException {
         if (v == null) {
             writeObject(null);
-            return;
         }
         writeObject(StringValue.newBuilder().setValue(v).build());
     }
@@ -55,7 +58,6 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
     public void writeBytes(byte[] b) throws IOException {
         if (b == null) {
             writeObject(null);
-            return;
         }
         writeObject(BytesValue.newBuilder().setValue(ByteString.copyFrom(b)).build());
     }
@@ -64,9 +66,8 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
     public void writeObject(Object obj) throws IOException {
         if (obj == null || ProtobufUtil.isNotSupport(obj.getClass())) {
             throw new IllegalArgumentException("This serialization only supports google protobuf objects, " +
-                    "current object class is: " + obj.getClass().getName());
+                    "current object class is: " + (obj == null ? "null" : obj.getClass().getName()));
         }
-
         ((MessageLite) obj).writeTo(os);
         os.flush();
     }
@@ -75,7 +76,6 @@ public class SingleProtobufDataOutputStream implements DataOutputStream {
     public void writeMap(Map<String, String> map) throws IOException {
         if (map == null) {
             writeObject(null);
-            return;
         }
         writeObject(MapValue.Map.newBuilder().putAllAttachments(map).build());
     }

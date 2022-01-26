@@ -20,6 +20,7 @@ import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.SerializeConstants;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -34,9 +35,13 @@ import static org.junit.Assert.assertEquals;
 
 public class JsonTest {
 
+    @BeforeClass
+    public static void init() {
+        System.setProperty("typeAsJsonProperty", "true");
+    }
+
     @Test
     public void testJson() throws IOException, ClassNotFoundException {
-        System.setProperty("typeAsJsonProperty", "false");
         JsonSerialization serialization = new JsonSerialization();
 
         assertEquals(SerializeConstants.JSON_SERIALIZATION_ID, serialization.getSeriTypeId());
@@ -70,7 +75,6 @@ public class JsonTest {
 
     @Test
     public void testTypeAsJsonProperty() throws IOException, ClassNotFoundException {
-        System.setProperty("typeAsJsonProperty", "true");
 
         JsonSerialization serialization = new JsonSerialization();
 
@@ -123,11 +127,10 @@ public class JsonTest {
 
     @Test
     public void readObjectTest() throws Exception {
-
         Model model = new Model();
         model.setName("wangwei");
         Object result = deserializeObj(model, Object.class);
-        Assert.assertTrue(result instanceof Map);
+        Assert.assertTrue(result instanceof Model);
         result = deserializeObj(model, Model.class);
         Assert.assertTrue(result instanceof Model);
 
@@ -136,12 +139,11 @@ public class JsonTest {
         subModel.setName("wangwei");
         subModel.setAge(10);
         Object subResult = deserializeObj(subModel, Object.class);
-        Assert.assertTrue(subResult instanceof Map);
+        Assert.assertTrue(subResult instanceof Model);
         subResult = deserializeObj(subModel, Model.class);
         Assert.assertTrue(subResult instanceof Model);
         subResult = deserializeObj(subModel, SubModel.class);
         Assert.assertTrue(subResult instanceof SubModel);
-
     }
 
     private <T> T deserializeObj(final Object obj, final Class clazz) throws Exception {

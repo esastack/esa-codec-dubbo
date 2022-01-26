@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.esastack.codec.common.server;
+package io.esastack.codec.serialization.kryo;
 
-import io.netty.channel.ChannelOption;
 import org.junit.Test;
 
-import java.util.Collections;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class NettyServerTest {
+public class CompatibleKryoTest {
     @Test
-    public void testNettyServer() {
-        NettyServerConfig config = new NettyServerConfig();
-        config.setUnixDomainSocketFile("test");
+    public void test() {
+        CompatibleKryo compatibleKryo = new CompatibleKryo();
+        assertThrows(IllegalArgumentException.class, () -> compatibleKryo.getDefaultSerializer(null));
+        assertNotNull(compatibleKryo.getDefaultSerializer(Inner.class));
+        assertNotNull(compatibleKryo.getDefaultSerializer(String.class));
+    }
 
-        config.setUnixDomainSocketFile(null);
-        config.setChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        config.setChildChannelOptions(Collections.singletonMap(ChannelOption.SO_BACKLOG, 128));
-        CustomNettyServer server = new CustomNettyServer(config);
-        server.start();
-        server.shutdown();
-
+    static class Inner {
+        public Inner(String name) {
+        }
     }
 }
