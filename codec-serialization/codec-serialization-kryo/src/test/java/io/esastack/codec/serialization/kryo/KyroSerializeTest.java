@@ -18,17 +18,21 @@ package io.esastack.codec.serialization.kryo;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.SerializeConstants;
+import io.esastack.codec.serialization.kryo.utils.KryoUtils;
 import io.esastack.codec.serialization.kryo.utils.ReflectionUtils;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class KyroSerializeTest {
 
@@ -44,6 +48,10 @@ public class KyroSerializeTest {
 
     @Test
     public void test() throws Exception {
+        try {
+            KryoUtils.register(String.class);
+        } catch (Exception ignore) {
+        }
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         KryoSerialization serialization = new KryoSerialization();
 
@@ -54,6 +62,8 @@ public class KyroSerializeTest {
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
+        dataOutputStream.writeBytes(new byte[]{});
+        dataOutputStream.writeBytes(null);
         dataOutputStream.writeInt(1);
         dataOutputStream.writeObject(1L);
         dataOutputStream.writeUTF("test");
@@ -70,10 +80,14 @@ public class KyroSerializeTest {
         DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
         byte byte1 = dataInputStream.readByte();
         byte[] bytes1 = dataInputStream.readBytes();
+        byte[] bytes2 = dataInputStream.readBytes();
+        byte[] bytes3 = dataInputStream.readBytes();
         int int1 = dataInputStream.readInt();
         Long long1 = dataInputStream.readObject(Long.class);
         assertEquals((byte) 1, byte1);
         assertEquals((byte) 1, bytes1[0]);
+        assertEquals(0, bytes2.length);
+        assertNull(bytes3);
         assertEquals(1, int1);
         assertEquals(1L, long1.longValue());
         String utf8 = dataInputStream.readUTF();
@@ -90,6 +104,23 @@ public class KyroSerializeTest {
         byteArrayInputStream.close();
 
         assertFalse(ReflectionUtils.checkZeroArgConstructor(User.class));
+    }
+
+    @Test
+    public void testException() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        KryoSerialization serialization = new KryoSerialization();
+        DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
+        dataOutputStream.writeByte((byte) 1);
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
+
+        assertThrows(IOException.class, dataInputStream::readUTF);
+        assertThrows(IOException.class, dataInputStream::readInt);
+        assertThrows(IOException.class, dataInputStream::readByte);
+        assertThrows(IOException.class, dataInputStream::readBytes);
     }
 
     public static class Model implements Serializable {

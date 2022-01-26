@@ -35,6 +35,7 @@ import java.util.Random;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ProtobufSerializationTest {
 
@@ -60,6 +61,34 @@ public class ProtobufSerializationTest {
     }
 
     @Test
+    public void testInt() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeInt(1);
+        serialize.flush();
+
+        DataInputStream deserialize = getDataInput(byteArrayOutputStream);
+        assertEquals(1, deserialize.readInt());
+
+        serialize.close();
+        deserialize.close();
+    }
+
+    @Test
+    public void testBytes() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeBytes(null);
+        serialize.flush();
+
+        DataInputStream deserialize = getDataInput(byteArrayOutputStream);
+        assertEquals(0, deserialize.readBytes().length);
+
+        serialize.close();
+        deserialize.close();
+    }
+
+    @Test
     public void testPBObject() throws Exception {
         ProtobufUtil.register(TestPB.PBRequestType.getDefaultInstance());
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -71,6 +100,9 @@ public class ProtobufSerializationTest {
 
         DataInputStream dataInputStream = getDataInput(byteArrayOutputStream);
         assertEquals(dataInputStream.readObject(TestPB.PBRequestType.class), request);
+
+        assertThrows(IllegalArgumentException.class, () -> dataOutputStream.writeObject("string"));
+        assertThrows(IllegalArgumentException.class, () -> dataInputStream.readObject(String.class));
     }
 
     @Test

@@ -54,6 +54,8 @@ public class FstSerializeTest {
 
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
+        dataOutputStream.writeBytes(new byte[]{});
+        dataOutputStream.writeBytes(null);
         dataOutputStream.writeInt(1);
         dataOutputStream.writeObject(1L);
         dataOutputStream.writeUTF("test");
@@ -70,6 +72,8 @@ public class FstSerializeTest {
         DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
         byte byte1 = dataInputStream.readByte();
         byte[] bytes1 = dataInputStream.readBytes();
+        byte[] bytes2 = dataInputStream.readBytes();
+        byte[] bytes3 = dataInputStream.readBytes();
         int int1 = dataInputStream.readInt();
         Long long1 = dataInputStream.readObject(Long.class);
         final String utf8 = dataInputStream.readUTF();
@@ -80,6 +84,8 @@ public class FstSerializeTest {
         assertThrows(IOException.class, () -> dataInputStream.readObject(String.class));
         Assert.assertEquals((byte) 1, byte1);
         Assert.assertEquals((byte) 1, bytes1[0]);
+        Assert.assertEquals(0, bytes2.length);
+        Assert.assertNull(bytes3);
         Assert.assertEquals(1, int1);
         Assert.assertEquals(1L, long1.longValue());
         Assert.assertEquals("test", utf8);
