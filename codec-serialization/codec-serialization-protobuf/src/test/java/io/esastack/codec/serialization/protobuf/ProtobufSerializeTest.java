@@ -42,6 +42,7 @@ public class ProtobufSerializeTest {
     public void test() throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ProtobufSerialization serialization = new ProtobufSerialization();
+
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});

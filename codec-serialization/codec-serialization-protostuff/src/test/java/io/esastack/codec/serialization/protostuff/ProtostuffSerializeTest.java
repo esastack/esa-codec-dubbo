@@ -17,6 +17,8 @@ package io.esastack.codec.serialization.protostuff;
 
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
+import io.esastack.codec.serialization.api.SerializeConstants;
+import io.esastack.codec.serialization.protostuff.utils.WrapperUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class ProtostuffSerializeTest {
@@ -39,9 +42,18 @@ public class ProtostuffSerializeTest {
     };
 
     @Test
+    @SuppressWarnings("unchecked")
     public void test() throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ProtostuffSerialization serialization = new ProtostuffSerialization();
+
+        Assert.assertEquals(SerializeConstants.PROTOSTUFF_SERIALIZATION_ID, serialization.getSeriTypeId());
+        Assert.assertEquals("x-application/protostuff", serialization.getContentType());
+        Assert.assertEquals("protostuff", serialization.getSeriName());
+
+        HashSet<String> set = new HashSet<>();
+        set.add("1");
+
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
@@ -49,6 +61,7 @@ public class ProtostuffSerializeTest {
         dataOutputStream.writeObject(1L);
         dataOutputStream.writeUTF("test");
         dataOutputStream.writeObject(model);
+        dataOutputStream.writeObject(set);
         dataOutputStream.writeEvent(model);
         dataOutputStream.writeThrowable(throwable);
         dataOutputStream.writeObject(map);
@@ -64,6 +77,7 @@ public class ProtostuffSerializeTest {
         Long long1 = dataInputStream.readObject(Long.class);
         String utf8 = dataInputStream.readUTF();
         Model model1 = dataInputStream.readObject(Model.class);
+        HashSet<String> set1 = (HashSet<String>) dataInputStream.readObject(HashSet.class);
         Model model2 = dataInputStream.readObject(Model.class);
         Throwable t = dataInputStream.readThrowable();
         HashMap<String, Object> map1 = (HashMap<String, Object>) dataInputStream.readMap();
@@ -73,11 +87,19 @@ public class ProtostuffSerializeTest {
         Assert.assertEquals(1L, long1.longValue());
         Assert.assertEquals("test", utf8);
         Assert.assertEquals(model.name, model1.getName());
+        Assert.assertEquals(1, set1.size());
         Assert.assertEquals(model.name, model2.getName());
         Assert.assertEquals("test", t.getMessage());
         Assert.assertEquals(model.name, ((Model) map1.get("key")).name);
         dataInputStream.close();
         byteArrayInputStream.close();
+        dataOutputStream.close();
+        byteArrayOutputStream.close();
+
+        Assert.assertTrue(WrapperUtils.needWrapper(TestEnum.class));
+    }
+
+    enum TestEnum {
     }
 
     public static class Model implements Serializable {

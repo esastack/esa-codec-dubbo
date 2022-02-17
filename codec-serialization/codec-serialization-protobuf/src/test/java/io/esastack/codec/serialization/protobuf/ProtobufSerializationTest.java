@@ -19,8 +19,10 @@ import com.google.protobuf.ByteString;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import io.esastack.codec.serialization.protobuf.utils.ProtobufUtil;
 import io.esastack.codec.serialization.protobuf.wrapper.TestPB;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -30,11 +32,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ProtobufSerializationTest {
 
-    private Serialization serialization = new ProtobufSerialization();
+    private final Serialization serialization = new ProtobufSerialization();
+
+    @Test
+    public void test() {
+        Assert.assertEquals(SerializeConstants.PROTOBUF_SERIALIZATION_ID, serialization.getSeriTypeId());
+        Assert.assertEquals("x-application/protobuf", serialization.getContentType());
+        Assert.assertEquals("protobuf", serialization.getSeriName());
+    }
 
     @Test
     public void testNull() throws Exception {
@@ -49,6 +61,34 @@ public class ProtobufSerializationTest {
     }
 
     @Test
+    public void testInt() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeInt(1);
+        serialize.flush();
+
+        DataInputStream deserialize = getDataInput(byteArrayOutputStream);
+        assertEquals(1, deserialize.readInt());
+
+        serialize.close();
+        deserialize.close();
+    }
+
+    @Test
+    public void testBytes() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeBytes(null);
+        serialize.flush();
+
+        DataInputStream deserialize = getDataInput(byteArrayOutputStream);
+        assertEquals(0, deserialize.readBytes().length);
+
+        serialize.close();
+        deserialize.close();
+    }
+
+    @Test
     public void testPBObject() throws Exception {
         ProtobufUtil.register(TestPB.PBRequestType.getDefaultInstance());
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -60,6 +100,9 @@ public class ProtobufSerializationTest {
 
         DataInputStream dataInputStream = getDataInput(byteArrayOutputStream);
         assertEquals(dataInputStream.readObject(TestPB.PBRequestType.class), request);
+
+        assertThrows(IllegalArgumentException.class, () -> dataOutputStream.writeObject("string"));
+        assertThrows(IllegalArgumentException.class, () -> dataInputStream.readObject(String.class));
     }
 
     @Test

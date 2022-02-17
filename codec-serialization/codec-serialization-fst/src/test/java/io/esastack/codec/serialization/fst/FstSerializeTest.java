@@ -17,14 +17,18 @@ package io.esastack.codec.serialization.fst;
 
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
+import io.esastack.codec.serialization.api.SerializeConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FstSerializeTest {
 
@@ -43,8 +47,15 @@ public class FstSerializeTest {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         FstSerialization serialization = new FstSerialization();
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
+
+        Assert.assertEquals(SerializeConstants.FST_SERIALIZATION_ID, serialization.getSeriTypeId());
+        Assert.assertEquals("x-application/fst", serialization.getContentType());
+        Assert.assertEquals("fst", serialization.getSeriName());
+
         dataOutputStream.writeByte((byte) 1);
         dataOutputStream.writeBytes(new byte[]{1});
+        dataOutputStream.writeBytes(new byte[]{});
+        dataOutputStream.writeBytes(null);
         dataOutputStream.writeInt(1);
         dataOutputStream.writeObject(1L);
         dataOutputStream.writeUTF("test");
@@ -56,19 +67,25 @@ public class FstSerializeTest {
 
         byte[] bytes = byteArrayOutputStream.toByteArray();
         byteArrayOutputStream.close();
+
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         DataInputStream dataInputStream = serialization.deserialize(byteArrayInputStream);
-        byte byte1 = dataInputStream.readByte();
-        byte[] bytes1 = dataInputStream.readBytes();
-        int int1 = dataInputStream.readInt();
-        Long long1 = dataInputStream.readObject(Long.class);
-        String utf8 = dataInputStream.readUTF();
-        Model model1 = dataInputStream.readObject(Model.class);
-        Model model2 = dataInputStream.readObject(Model.class);
-        Throwable t = dataInputStream.readThrowable();
-        HashMap<String, Object> map1 = (HashMap<String, Object>) dataInputStream.readMap();
+        final byte byte1 = dataInputStream.readByte();
+        final byte[] bytes1 = dataInputStream.readBytes();
+        final byte[] bytes2 = dataInputStream.readBytes();
+        final byte[] bytes3 = dataInputStream.readBytes();
+        final int int1 = dataInputStream.readInt();
+        final Long long1 = dataInputStream.readObject(Long.class);
+        final String utf8 = dataInputStream.readUTF();
+        final Model model1 = dataInputStream.readObject(Model.class);
+        final Model model2 = dataInputStream.readObject(Model.class);
+        final Throwable t = dataInputStream.readThrowable();
+        final HashMap<String, Object> map1 = (HashMap<String, Object>) dataInputStream.readMap();
+        assertThrows(IOException.class, () -> dataInputStream.readObject(String.class));
         Assert.assertEquals((byte) 1, byte1);
         Assert.assertEquals((byte) 1, bytes1[0]);
+        Assert.assertEquals(0, bytes2.length);
+        Assert.assertNull(bytes3);
         Assert.assertEquals(1, int1);
         Assert.assertEquals(1L, long1.longValue());
         Assert.assertEquals("test", utf8);
@@ -76,6 +93,7 @@ public class FstSerializeTest {
         Assert.assertEquals(model.name, model2.getName());
         Assert.assertEquals("test", t.getMessage());
         Assert.assertEquals(model.name, ((Model) map1.get("key")).name);
+        dataOutputStream.close();
         dataInputStream.close();
         byteArrayInputStream.close();
     }

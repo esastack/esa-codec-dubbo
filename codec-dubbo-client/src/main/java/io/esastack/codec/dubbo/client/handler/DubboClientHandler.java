@@ -35,7 +35,7 @@ import java.net.SocketAddress;
 import java.util.Map;
 
 /**
- * 客户端收到响应后进行处理,Netty InBound事件
+ * The client processes the response after receiving the response
  */
 public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage> {
 
@@ -49,7 +49,8 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
     private int sentHeartbeatCount;
 
     public DubboClientHandler(String connectionName, Map<Long, ResponseCallback> callbackMap) {
-        super(false); //NOT auto release
+        // NOT auto release
+        super(false);
         this.connectionName = connectionName;
         this.callbackMap = callbackMap;
     }
@@ -57,7 +58,7 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) {
         Throwable error = wrapIfNecessary(t);
-        //回调所有的DubboCallback
+        // Call back all DubboCallback
         for (Map.Entry<Long, ResponseCallback> entry : callbackMap.entrySet()) {
             ResponseCallback callback = callbackMap.remove(entry.getKey());
             if (callback != null) {
@@ -65,8 +66,8 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
             }
         }
 
-        //WARNING:关连接要后于callback，否则错误信息会被吞掉
-        //发生网络异常或解码异常，关闭连接
+        // WARNING: Closing the connection should lag the callback, otherwise the error message will be swallowed
+        // A network exception or decoding exception occurs, and the connection is closed
         ctx.close();
     }
 
@@ -97,19 +98,22 @@ public class DubboClientHandler extends SimpleChannelInboundHandler<DubboMessage
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DubboMessage response) {
 
-        //reset un-responded heartbeat count
+        // Reset un-responded heartbeat count
         sentHeartbeatCount = 0;
 
         long requestId = response.getHeader().getRequestId();
-        //回消息包，如果是心跳包就直接返回
+        // The heartbeat packet returns directly and the response is actively released
         if (response.getHeader().isHeartbeat()) {
+            response.release();
             return;
         }
-        //获取异步请求回调函数
+        // Get the asynchronous request callback function
         ResponseCallback callback = callbackMap.remove(requestId);
 
-        //协议错误、超时被清理等情况
+        // In the case of protocol errors, timeouts, etc.,
+        // the callback is cleaned up, and we need to actively release the response
         if (callback == null) {
+            response.release();
             return;
         }
 

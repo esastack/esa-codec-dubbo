@@ -34,8 +34,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertNull;
-
 public class NettyUtilsTest {
 
     @Test
@@ -47,7 +45,7 @@ public class NettyUtilsTest {
         DataInputStream dataInputStream = serialization.deserialize(inputStream);
         Object object = dataInputStream.readObject(null);
 
-        assertNull(object);
+        Assert.assertNull(object);
     }
 
     @Test
@@ -57,7 +55,7 @@ public class NettyUtilsTest {
 
         EmbeddedChannel channel = new EmbeddedChannel();
         NettyUtils.setChannelAttr(channel, key, value);
-        assertNull(NettyUtils.getChannelAttr(channel, null));
+        Assert.assertNull(NettyUtils.getChannelAttr(channel, null));
         Assert.assertEquals(value, NettyUtils.getChannelAttr(channel, key));
 
         EmbeddedChannel channel2 = new EmbeddedChannel();
@@ -103,5 +101,4 @@ public class NettyUtilsTest {
                 new UnknownProtocolException("test", new NullPointerException())
         )));
     }
-
 }

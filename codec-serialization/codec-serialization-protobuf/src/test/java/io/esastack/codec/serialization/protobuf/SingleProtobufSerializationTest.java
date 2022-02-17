@@ -16,6 +16,7 @@
 package io.esastack.codec.serialization.protobuf;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.esastack.codec.serialization.api.DataInputStream;
 import io.esastack.codec.serialization.api.DataOutputStream;
 import io.esastack.codec.serialization.api.Serialization;
@@ -27,6 +28,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -39,6 +41,10 @@ public class SingleProtobufSerializationTest {
 
     @Test
     public void testPBObject() throws Exception {
+        assertEquals(PROTOBUF_SINGLE_SERIALIZATION_ID, serialization.getSeriTypeId());
+        assertEquals("x-application/proto", serialization.getContentType());
+        assertEquals("proto", serialization.getSeriName());
+
         ProtobufUtil.register(TestPB.PBRequestType.getDefaultInstance());
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream dataOutputStream = serialization.serialize(byteArrayOutputStream);
@@ -51,6 +57,87 @@ public class SingleProtobufSerializationTest {
         DataInputStream dataInputStream = getDataInput(byteArrayOutputStream);
         assertEquals(dataInputStream.readObject(TestPB.PBRequestType.class), request);
         dataInputStream.close();
+    }
+
+    @Test
+    public void testString() throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeUTF("single");
+        assertThrows(IllegalArgumentException.class, () -> serialize.writeUTF(null));
+        assertThrows(IllegalArgumentException.class, () -> serialize.writeBytes(null));
+        assertThrows(IllegalArgumentException.class, () -> serialize.writeMap(null));
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertEquals("single", deserialize.readUTF());
+    }
+
+    @Test
+    public void testInt() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeInt(1);
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertEquals(1, deserialize.readInt());
+    }
+
+    @Test
+    public void testByte() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeByte((byte) 97);
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertEquals('a', deserialize.readByte());
+    }
+
+    @Test
+    public void testBytes() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeBytes(new byte[]{(byte) 97, (byte) 98});
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertEquals(2, deserialize.readBytes().length);
+    }
+
+    @Test
+    public void testMap() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeMap(Collections.singletonMap("k", "v"));
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertThrows(InvalidProtocolBufferException.class, deserialize::readMap);
+    }
+
+    @Test
+    public void testThrowable() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream serialize = serialization.serialize(byteArrayOutputStream);
+        serialize.writeThrowable(new RuntimeException());
+        serialize.flush();
+
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        DataInputStream deserialize = serialization.deserialize(new ByteArrayInputStream(bytes));
+        assertThrows(InvalidProtocolBufferException.class, deserialize::readThrowable);
+        //assertNotNull(deserialize.readThrowable());
+    }
+
+    @Test
+    public void testDefaultInst() {
+        assertThrows(RuntimeException.class, () -> SingleProtobufDataInputStream.defaultInst(String.class));
     }
 
     @Ignore
