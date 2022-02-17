@@ -40,6 +40,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSessionContext;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -79,8 +80,8 @@ public class NettyConnectionTest {
         config.setHost("127.0.0.1");
         config.setPort(20000);
         NettyConnection connection = new NettyConnection(config, null);
-        assertThrows(ConnectFailedException.class, connection::connect);
-        ChannelFuture future = connection.asyncConnect();
+        assertThrows(ConnectFailedException.class, connection::connectSync);
+        CompletableFuture<Boolean> future = connection.connect();
         assertThrows(ExecutionException.class, future::get);
 
         assertFalse(connection.isActive());
@@ -92,9 +93,9 @@ public class NettyConnectionTest {
         assertNull(connection.getChannel());
 
         Future<Channel> future1 = new TestFuture<>();
-        assertNull(connection.getTslHandshakeFuture());
-        connection.setTslHandshakeFuture(future1);
-        assertEquals(future1, connection.getTslHandshakeFuture());
+        assertNull(connection.getTlsHandshakeFuture());
+        connection.setTlsHandshakeFuture(future1);
+        assertEquals(future1, connection.getTlsHandshakeFuture());
 
         connection.close();
     }
@@ -118,7 +119,7 @@ public class NettyConnectionTest {
         });
         config.setTlsFallback2Normal(true);
         NettyConnection nettyConnection = new NettyConnection(config, null);
-        nettyConnection.connect();
+        nettyConnection.connectSync();
         assertTrue(nettyConnection.isActive());
         assertTrue(nettyConnection.isWritable());
         assertNotNull(nettyConnection.getName());

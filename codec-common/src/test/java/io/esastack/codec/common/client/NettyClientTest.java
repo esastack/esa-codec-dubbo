@@ -85,7 +85,7 @@ public class NettyClientTest {
     @Test
     public void testClient() throws ExecutionException, InterruptedException {
         assertThrows(ConnectFailedException.class,
-                () -> new NettyConnection(createConnectionConfig(20000), null).connect());
+                () -> new NettyConnection(createConnectionConfig(20000), null).connectSync());
         TestNettyClient client = new TestNettyClient(createConnectionConfig(20880));
         assertTrue(client.isActive());
         client.sendMsg("test");

@@ -116,24 +116,6 @@ public class PooledNettyConnectionFactoryTest {
     }
 
     @Test
-    public void test() throws ExecutionException, InterruptedException {
-        PooledNettyConnectionFactory factory = new PooledNettyConnectionFactory(createConnectConfig(20880));
-        CompletableFuture<NettyConnection> future = factory.create();
-        NettyConnection connection = future.get();
-        assertTrue(factory.validate(connection));
-
-        factory.destroy(connection).whenComplete((v, e) -> assertTrue(factory.validate(connection)));
-
-        NettyConnection connection1 = new NettyConnection(new NettyConnectionConfig(), null);
-        assertThrows(ConnectFailedException.class,
-                () -> factory.connectSync(connection1, new ConnectFailedException("")));
-        assertThrows(ConnectFailedException.class, () -> factory.connectSync(connection1, new RuntimeException()));
-        NettyConnection connection2 = factory.connectSync(connection1, new TslHandshakeFailedException(""));
-        assertTrue(factory.validate(connection2));
-        assertEquals(connection1, factory.connectSync(connection1, null));
-    }
-
-    @Test
     public void testSsl() throws Exception {
         final EmbeddedChannel channel = new EmbeddedChannel();
         final SslContext sslContext = buildSSLContext();
