@@ -180,6 +180,158 @@ public final class ReflectUtils {
         return sb.toString();
     }
 
+    /**
+     * name to class.
+     * "boolean" => "Z"
+     * "java.util.Map[][]" => "[[Ljava.util.Map"
+     * "[[Ljava.util.Map" => "[[Ljava.util.Map"
+     *
+     * @param name name.
+     * @return Class desc.
+     */
+    public static String name2zDesc(String name) {
+        switch (name.charAt(0)) {
+            case JVM_VOID:
+            case JVM_BOOLEAN:
+            case JVM_BYTE:
+            case JVM_CHAR:
+            case JVM_DOUBLE:
+            case JVM_FLOAT:
+            case JVM_INT:
+            case JVM_LONG:
+            case JVM_SHORT:
+            case 'L':
+            case '[':
+                return name;
+            default:
+                break;
+        }
+        int c = 0, index = name.indexOf('[');
+        if (index > 0) {
+            c = (name.length() - index) / 2;
+            name = name.substring(0, index);
+        }
+        StringBuilder sb = new StringBuilder();
+        while (c-- > 0) {
+            sb.append("[");
+        }
+        switch (name) {
+            case "void":
+                sb.append(JVM_VOID);
+                break;
+            case "boolean":
+                sb.append(JVM_BOOLEAN);
+                break;
+            case "byte":
+                sb.append(JVM_BYTE);
+                break;
+            case "char":
+                sb.append(JVM_CHAR);
+                break;
+            case "double":
+                sb.append(JVM_DOUBLE);
+                break;
+            case "float":
+                sb.append(JVM_FLOAT);
+                break;
+            case "int":
+                sb.append(JVM_INT);
+                break;
+            case "long":
+                sb.append(JVM_LONG);
+                break;
+            case "short":
+                sb.append(JVM_SHORT);
+                break;
+            default:
+                // "java.lang.Object" ==> "Ljava.lang.Object;"
+                sb.append('L').append(name).append(';');
+                break;
+        }
+        return sb.toString();
+    }
+
+    /**
+     * desc to name.
+     * "[[I" => "int[][]"
+     *
+     * @param desc desc.
+     * @return name.
+     */
+    public static String desc2name(String desc) {
+        if (desc.endsWith("[]")) {
+            return desc;
+        }
+        StringBuilder sb = new StringBuilder();
+        int c = desc.lastIndexOf('[') + 1;
+        if (desc.length() == c + 1) {
+            switch (desc.charAt(c)) {
+                case JVM_VOID: {
+                    sb.append("void");
+                    break;
+                }
+                case JVM_BOOLEAN: {
+                    sb.append("boolean");
+                    break;
+                }
+                case JVM_BYTE: {
+                    sb.append("byte");
+                    break;
+                }
+                case JVM_CHAR: {
+                    sb.append("char");
+                    break;
+                }
+                case JVM_DOUBLE: {
+                    sb.append("double");
+                    break;
+                }
+                case JVM_FLOAT: {
+                    sb.append("float");
+                    break;
+                }
+                case JVM_INT: {
+                    sb.append("int");
+                    break;
+                }
+                case JVM_LONG: {
+                    sb.append("long");
+                    break;
+                }
+                case JVM_SHORT: {
+                    sb.append("short");
+                    break;
+                }
+                default:
+                    throw new RuntimeException();
+            }
+        } else if (desc.startsWith("L") || desc.startsWith("[")) {
+            sb.append(desc.substring(c + 1, desc.length() - 1).replace('/', '.'));
+        } else {
+            //like java.lang.String
+            sb.append(desc);
+        }
+        while (c-- > 0) {
+            sb.append("[]");
+        }
+        return sb.toString();
+    }
+
+    public static Class<?>[] name2Class(String[] names) throws ClassNotFoundException {
+        if (names == null || names.length == 0) {
+            return new Class<?>[0];
+        }
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        Class<?>[] parameterTypes = new Class<?>[names.length];
+        for (int i = 0; i < names.length; i++) {
+            parameterTypes[i] = desc2class(name2Desc(names[i]), classLoader);
+        }
+        return parameterTypes;
+    }
+
     /*public static String getDesc(final Method method) {
         if (method == null) {
             return "";
