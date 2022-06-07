@@ -29,6 +29,7 @@ public interface SerializeConstants {
     byte GSON_SERIALIZATION_ID = 16;
     byte PBMIX_SERIALIZATION_ID = 17;
 
+    byte PROTOBUF_JSON_SERIALIZATION_ID = 21;
     byte PROTOBUF_SERIALIZATION_ID = 22;
     byte PROTOBUF_SINGLE_SERIALIZATION_ID = 44;
 
