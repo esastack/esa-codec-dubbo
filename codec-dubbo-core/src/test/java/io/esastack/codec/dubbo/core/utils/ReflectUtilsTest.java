@@ -45,6 +45,54 @@ public class ReflectUtilsTest {
         Assert.assertEquals(long.class, ReflectUtils.desc2classArray(ReflectUtils.getDesc(long.class))[0]);
         Assert.assertEquals(short.class, ReflectUtils.desc2classArray(ReflectUtils.getDesc(short.class))[0]);
 
+        Assert.assertEquals("I", ReflectUtils.name2Desc("int"));
+        Assert.assertEquals("I", ReflectUtils.name2Desc("I"));
+        Assert.assertEquals("[I", ReflectUtils.name2Desc("int[]"));
+        Assert.assertEquals("[I", ReflectUtils.name2Desc("[I"));
+        Assert.assertEquals("[[I", ReflectUtils.name2Desc("int[][]"));
+        Assert.assertEquals("[[I", ReflectUtils.name2Desc("[[I"));
+        Assert.assertEquals("Ljava/lang/String;", ReflectUtils.name2Desc("java.lang.String"));
+        Assert.assertEquals("Ljava/lang/String;", ReflectUtils.name2Desc("Ljava.lang.String;"));
+        Assert.assertEquals("Ljava/lang/String;", ReflectUtils.name2Desc("Ljava/lang/String;"));
+        Assert.assertEquals("[Ljava/lang/String;", ReflectUtils.name2Desc("java.lang.String[]"));
+        Assert.assertEquals("[Ljava/lang/String;", ReflectUtils.name2Desc("[Ljava.lang.String;"));
+        Assert.assertEquals("[Ljava/lang/String;", ReflectUtils.name2Desc("[Ljava/lang/String;"));
+        Assert.assertEquals("[[Ljava/lang/String;", ReflectUtils.name2Desc("java.lang.String[][]"));
+        Assert.assertEquals("[[Ljava/lang/String;", ReflectUtils.name2Desc("[[Ljava.lang.String;"));
+        Assert.assertEquals("[[Ljava/lang/String;", ReflectUtils.name2Desc("[[Ljava/lang/String;"));
+
+        Assert.assertEquals("int", ReflectUtils.desc2name("I"));
+        Assert.assertEquals("int", ReflectUtils.desc2name("int"));
+        Assert.assertEquals("int[]", ReflectUtils.desc2name("[I"));
+        Assert.assertEquals("int[]", ReflectUtils.desc2name("int[]"));
+        Assert.assertEquals("int[][]", ReflectUtils.desc2name("[[I"));
+        Assert.assertEquals("int[][]", ReflectUtils.desc2name("int[][]"));
+        Assert.assertEquals("java.lang.String", ReflectUtils.desc2name("Ljava/lang/String;"));
+        Assert.assertEquals("java.lang.String", ReflectUtils.desc2name("Ljava.lang.String;"));
+        Assert.assertEquals("java.lang.String", ReflectUtils.desc2name("java.lang.String"));
+        Assert.assertEquals("java.lang.String[]", ReflectUtils.desc2name("[Ljava/lang/String;"));
+        Assert.assertEquals("java.lang.String[]", ReflectUtils.desc2name("[Ljava.lang.String;"));
+        Assert.assertEquals("java.lang.String[]", ReflectUtils.desc2name("java.lang.String[]"));
+        Assert.assertEquals("java.lang.String[][]", ReflectUtils.desc2name("[[Ljava/lang/String;"));
+        Assert.assertEquals("java.lang.String[][]", ReflectUtils.desc2name("[[Ljava.lang.String;"));
+        Assert.assertEquals("java.lang.String[][]", ReflectUtils.desc2name("java.lang.String[][]"));
+
+        Assert.assertEquals(int.class, ReflectUtils.name2Class("int"));
+        Assert.assertEquals(int.class, ReflectUtils.name2Class("I"));
+        Assert.assertEquals(int[].class, ReflectUtils.name2Class("int[]"));
+        Assert.assertEquals(int[].class, ReflectUtils.name2Class("[I"));
+        Assert.assertEquals(int[][].class, ReflectUtils.name2Class("int[][]"));
+        Assert.assertEquals(int[][].class, ReflectUtils.name2Class("[[I"));
+        Assert.assertEquals(String.class, ReflectUtils.name2Class("java.lang.String"));
+        Assert.assertEquals(String.class, ReflectUtils.name2Class("Ljava.lang.String;"));
+        Assert.assertEquals(String.class, ReflectUtils.name2Class("Ljava/lang/String;"));
+        Assert.assertEquals(String[].class, ReflectUtils.name2Class("java.lang.String[]"));
+        Assert.assertEquals(String[].class, ReflectUtils.name2Class("[Ljava.lang.String;"));
+        Assert.assertEquals(String[].class, ReflectUtils.name2Class("[Ljava/lang/String;"));
+        Assert.assertEquals(String[][].class, ReflectUtils.name2Class("java.lang.String[][]"));
+        Assert.assertEquals(String[][].class, ReflectUtils.name2Class("[[Ljava.lang.String;"));
+        Assert.assertEquals(String[][].class, ReflectUtils.name2Class("[[Ljava/lang/String;"));
+
         Thread.currentThread().setContextClassLoader(null);
         Assert.assertEquals(0, ReflectUtils.desc2classArray("").length);
         Assert.assertEquals("", ReflectUtils.getDesc(new Class[0]));
