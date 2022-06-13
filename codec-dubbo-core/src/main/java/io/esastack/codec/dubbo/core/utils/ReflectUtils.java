@@ -327,7 +327,7 @@ public final class ReflectUtils {
         }
         Class<?>[] parameterTypes = new Class<?>[names.length];
         for (int i = 0; i < names.length; i++) {
-            parameterTypes[i] = desc2class(name2Desc(names[i]), classLoader);
+            parameterTypes[i] = desc2class(names[i], classLoader);
         }
         return parameterTypes;
     }
