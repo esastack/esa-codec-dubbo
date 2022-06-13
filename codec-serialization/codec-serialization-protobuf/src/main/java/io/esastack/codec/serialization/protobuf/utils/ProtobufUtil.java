@@ -17,6 +17,7 @@ package io.esastack.codec.serialization.protobuf.utils;
 
 import com.google.common.base.Strings;
 import com.google.protobuf.*;
+import com.google.protobuf.util.JsonFormat;
 import io.esastack.codec.serialization.protobuf.wrapper.MapValue;
 import io.esastack.codec.serialization.protobuf.wrapper.ThrowableValue;
 
@@ -60,6 +61,23 @@ public class ProtobufUtil {
         return clazz == null || !MessageLite.class.isAssignableFrom(clazz);
     }
 
+    public static <T> T deserializeJson(String json, Class<T> requestClass) throws InvalidProtocolBufferException {
+        GeneratedMessageV3.Builder builder;
+        try {
+            builder = getMessageV3Builder(requestClass);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Get google protobuf message builder from " + requestClass.getName() + "failed", e);
+        }
+        JsonFormat.parser().merge(json, builder);
+        return (T) builder.build();
+    }
+
+    public static String serializeJson(Object value) throws InvalidProtocolBufferException {
+        JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
+        return printer.print((MessageOrBuilder) value);
+    }
+
     public static Object parseFrom(final String className, byte[] data) throws IOException {
         String copyClass = className;
         boolean isBuilderClass = copyClass.endsWith(BUILDER_CLASS_SUFFIX);
@@ -77,6 +95,11 @@ public class ProtobufUtil {
     public static <T> T parseFrom(Class<T> clazz, InputStream is) throws IOException {
         MessageBuilder messageBuilder = getMessageBuilder(clazz);
         return (T) messageBuilder.parseFrom(is);
+    }
+
+    private static GeneratedMessageV3.Builder getMessageV3Builder(Class<?> requestType) throws Exception {
+        Method method = requestType.getMethod("newBuilder");
+        return (GeneratedMessageV3.Builder) method.invoke(null, null);
     }
 
     @SuppressWarnings("unchecked")
