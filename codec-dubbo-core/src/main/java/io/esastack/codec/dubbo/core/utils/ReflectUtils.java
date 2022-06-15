@@ -149,7 +149,7 @@ public final class ReflectUtils {
                     ret.append(JVM_SHORT);
                     break;
                 default:
-                    break;
+                    throw new RuntimeException("Invalid primitive type: " + t);
             }
         } else {
             ret.append('L');
@@ -181,15 +181,19 @@ public final class ReflectUtils {
     }
 
     /**
-     * name to class.
+     * name to desc, if the name is already a desc, just return it.
      * "boolean" => "Z"
-     * "java.util.Map[][]" => "[[Ljava.util.Map"
-     * "[[Ljava.util.Map" => "[[Ljava.util.Map"
+     * "java.lang.String" => "Ljava/lang/String;"
+     * "Ljava.lang.String" => "Ljava/lang/String;"
+     * "Ljava/lang/String" => "Ljava/lang/String;"
+     * "java.util.Map[][]" => "[[Ljava/util/Map;"
+     * "[[Ljava.util.Map;" => "[[Ljava/util/Map;"
+     * "[[Ljava/util/Map;" => "[[Ljava/util/Map;"
      *
      * @param name name.
      * @return Class desc.
      */
-    public static String name2zDesc(String name) {
+    public static String name2Desc(String name) {
         switch (name.charAt(0)) {
             case JVM_VOID:
             case JVM_BOOLEAN:
@@ -200,9 +204,14 @@ public final class ReflectUtils {
             case JVM_INT:
             case JVM_LONG:
             case JVM_SHORT:
-            case 'L':
-            case '[':
                 return name;
+            case 'L':
+                //"Ljava.lang.String" => "Ljava/lang/String;"
+                //"Ljava/lang/String" => "Ljava/lang/String;"
+            case '[':
+                //"[[Ljava.util.Map;" => "[[Ljava/util/Map;"
+                //"[[Ljava/util/Map;" => "[[Ljava/util/Map;"
+                return name.replace(".", "/");
             default:
                 break;
         }
@@ -245,7 +254,7 @@ public final class ReflectUtils {
                 break;
             default:
                 // "java.lang.Object" ==> "Ljava.lang.Object;"
-                sb.append('L').append(name).append(';');
+                sb.append('L').append(name.replace(".", "/")).append(';');
                 break;
         }
         return sb.toString();
@@ -253,7 +262,11 @@ public final class ReflectUtils {
 
     /**
      * desc to name.
+     * "I" ==> "int"
      * "[[I" => "int[][]"
+     * "int[][]" => "int[][]"
+     * "int" => "int"
+     * "java.lang.String" => "java.lang.String"
      *
      * @param desc desc.
      * @return name.
@@ -327,28 +340,115 @@ public final class ReflectUtils {
         }
         Class<?>[] parameterTypes = new Class<?>[names.length];
         for (int i = 0; i < names.length; i++) {
-            parameterTypes[i] = desc2class(names[i], classLoader);
+            parameterTypes[i] = name2Class(names[i], classLoader);
         }
         return parameterTypes;
     }
 
-    /*public static String getDesc(final Method method) {
-        if (method == null) {
-            return "";
+    /**
+     * name to class.
+     * "boolean" => boolean.class
+     * "java.util.Map[][]" => java.util.Map[][].class
+     *
+     * @param name name.
+     * @return Class instance.
+     */
+    public static Class<?> name2Class(String name) throws ClassNotFoundException {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        return name2Class(name, classLoader);
+    }
+
+    private static Class<?> name2Class(String name, ClassLoader classLoader) throws ClassNotFoundException {
+        name = desc2name(name);
+        int c = 0, index = name.indexOf('[');
+        if (index > 0) {
+            c = (name.length() - index) / 2;
+            name = name.substring(0, index);
+        }
+        if (c > 0) {
+            StringBuilder sb = new StringBuilder();
+            while (c-- > 0) {
+                sb.append("[");
+            }
+
+            switch (name) {
+                case "void":
+                    sb.append(JVM_VOID);
+                    break;
+                case "boolean":
+                    sb.append(JVM_BOOLEAN);
+                    break;
+                case "byte":
+                    sb.append(JVM_BYTE);
+                    break;
+                case "char":
+                    sb.append(JVM_CHAR);
+                    break;
+                case "double":
+                    sb.append(JVM_DOUBLE);
+                    break;
+                case "float":
+                    sb.append(JVM_FLOAT);
+                    break;
+                case "int":
+                    sb.append(JVM_INT);
+                    break;
+                case "long":
+                    sb.append(JVM_LONG);
+                    break;
+                case "short":
+                    sb.append(JVM_SHORT);
+                    break;
+                default:
+                    // "java.lang.Object" ==> "Ljava.lang.Object;"
+                    sb.append('L').append(name).append(';');
+                    break;
+            }
+            name = sb.toString();
+        } else {
+            if ("void".equals(name)) {
+                return void.class;
+            }
+            if ("boolean".equals(name)) {
+                return boolean.class;
+            }
+            if ("byte".equals(name)) {
+                return byte.class;
+            }
+            if ("char".equals(name)) {
+                return char.class;
+            }
+            if ("double".equals(name)) {
+                return double.class;
+            }
+            if ("float".equals(name)) {
+                return float.class;
+            }
+            if ("int".equals(name)) {
+                return int.class;
+            }
+            if ("long".equals(name)) {
+                return long.class;
+            }
+            if ("short".equals(name)) {
+                return short.class;
+            }
         }
 
-        if (PARAMETER_DESC_CACHE.containsKey(method)) {
-            return PARAMETER_DESC_CACHE.get(method);
+        if (!DESC_CLASS_CACHE.containsKey(classLoader)) {
+            DESC_CLASS_CACHE.computeIfAbsent(classLoader, loader -> new ConcurrentHashMap<>());
         }
-
-        StringBuilder sb = new StringBuilder(64);
-        for (Class<?> c : method.getParameterTypes()) {
-            sb.append(getDesc(c));
+        ConcurrentMap<String, Class<?>> cacheMap = DESC_CLASS_CACHE.get(classLoader);
+        Class<?> clazz = cacheMap.get(name);
+        if (clazz == null) {
+            clazz = Class.forName(name, true, classLoader);
+            cacheMap.put(name, clazz);
         }
-        String desc = sb.toString();
-        PARAMETER_DESC_CACHE.putIfAbsent(method, desc);
-        return desc;
-    }*/
+        return clazz;
+    }
 
     /**
      * desc to class.
