@@ -182,13 +182,13 @@ public final class ReflectUtils {
 
     /**
      * name to desc, if the name is already a desc, just return it.
-     * "boolean" => "Z"
-     * "java.lang.String" => "Ljava/lang/String;"
-     * "Ljava.lang.String" => "Ljava/lang/String;"
-     * "Ljava/lang/String" => "Ljava/lang/String;"
-     * "java.util.Map[][]" => "[[Ljava/util/Map;"
-     * "[[Ljava.util.Map;" => "[[Ljava/util/Map;"
-     * "[[Ljava/util/Map;" => "[[Ljava/util/Map;"
+     * "boolean" : "Z"
+     * "java.lang.String" : "Ljava/lang/String;"
+     * "Ljava.lang.String" : "Ljava/lang/String;"
+     * "Ljava/lang/String" : "Ljava/lang/String;"
+     * "java.util.Map[][]" : "[[Ljava/util/Map;"
+     * "[[Ljava.util.Map;" : "[[Ljava/util/Map;"
+     * "[[Ljava/util/Map;" : "[[Ljava/util/Map;"
      *
      * @param name name.
      * @return Class desc.
@@ -206,11 +206,11 @@ public final class ReflectUtils {
             case JVM_SHORT:
                 return name;
             case 'L':
-                //"Ljava.lang.String" => "Ljava/lang/String;"
-                //"Ljava/lang/String" => "Ljava/lang/String;"
+                //"Ljava.lang.String" : "Ljava/lang/String;"
+                //"Ljava/lang/String" : "Ljava/lang/String;"
             case '[':
-                //"[[Ljava.util.Map;" => "[[Ljava/util/Map;"
-                //"[[Ljava/util/Map;" => "[[Ljava/util/Map;"
+                //"[[Ljava.util.Map;" : "[[Ljava/util/Map;"
+                //"[[Ljava/util/Map;" : "[[Ljava/util/Map;"
                 return name.replace(".", "/");
             default:
                 break;
@@ -253,7 +253,7 @@ public final class ReflectUtils {
                 sb.append(JVM_SHORT);
                 break;
             default:
-                // "java.lang.Object" ==> "Ljava.lang.Object;"
+                // "java.lang.Object" =: "Ljava.lang.Object;"
                 sb.append('L').append(name.replace(".", "/")).append(';');
                 break;
         }
@@ -262,11 +262,11 @@ public final class ReflectUtils {
 
     /**
      * desc to name.
-     * "I" ==> "int"
-     * "[[I" => "int[][]"
-     * "int[][]" => "int[][]"
-     * "int" => "int"
-     * "java.lang.String" => "java.lang.String"
+     * "I" =: "int"
+     * "[[I" : "int[][]"
+     * "int[][]" : "int[][]"
+     * "int" : "int"
+     * "java.lang.String" : "java.lang.String"
      *
      * @param desc desc.
      * @return name.
@@ -347,8 +347,8 @@ public final class ReflectUtils {
 
     /**
      * name to class.
-     * "boolean" => boolean.class
-     * "java.util.Map[][]" => java.util.Map[][].class
+     * "boolean" : boolean.class
+     * "java.util.Map[][]" : java.util.Map[][].class
      *
      * @param name name.
      * @return Class instance.
@@ -403,7 +403,7 @@ public final class ReflectUtils {
                     sb.append(JVM_SHORT);
                     break;
                 default:
-                    // "java.lang.Object" ==> "Ljava.lang.Object;"
+                    // "java.lang.Object" : "Ljava.lang.Object;"
                     sb.append('L').append(name).append(';');
                     break;
             }
@@ -452,8 +452,8 @@ public final class ReflectUtils {
 
     /**
      * desc to class.
-     * "[Z" => boolean[].class
-     * "[[Ljava/util/Map;" => java.util.Map[][].class
+     * "[Z" : boolean[].class
+     * "[[Ljava/util/Map;" : java.util.Map[][].class
      *
      * @param desc desc.
      * @return Class instance.
@@ -479,11 +479,11 @@ public final class ReflectUtils {
             case JVM_SHORT:
                 return short.class;
             case 'L':
-                // "Ljava/lang/Object;" ==> "java.lang.Object"
+                // "Ljava/lang/Object;" : "java.lang.Object"
                 desc = desc.substring(1, desc.length() - 1).replace('/', '.');
                 break;
             case '[':
-                // "[[Ljava/lang/Object;" ==> "[[Ljava.lang.Object;"
+                // "[[Ljava/lang/Object;" : "[[Ljava.lang.Object;"
                 desc = desc.replace('/', '.');
                 break;
             default:
