@@ -52,7 +52,12 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
         if (builder.init) {
             try {
                 for (int i = 0; i < builder.maxPoolSize; i++) {
-                    acquireFromPool(i, builder.blockCreateWhenInit);
+                    AcquireTask acquireTask = acquireFromPool(i, builder.blockCreateWhenInit);
+                    //Avoiding block the biz code too long while some instance is not connectable,
+                    //If the first connection failed, ignore the rest initiation.
+                    if (acquireTask.isCompleted() && acquireTask.acquireResult.hasException()) {
+                        break;
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.error("Failed to init connection pool", e);
