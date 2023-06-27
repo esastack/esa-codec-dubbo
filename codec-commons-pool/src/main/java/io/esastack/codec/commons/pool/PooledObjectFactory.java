@@ -23,6 +23,13 @@ import java.util.concurrent.CompletableFuture;
 public interface PooledObjectFactory<T> {
 
     /**
+     * @return the id of the factory
+     */
+    default String identity() {
+        return null;
+    }
+
+    /**
      * Async create pool element.
      *
      * @return CompletableFuture —— result of create

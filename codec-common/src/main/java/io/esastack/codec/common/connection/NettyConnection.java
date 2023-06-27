@@ -95,6 +95,7 @@ public class NettyConnection {
     }
 
     public CompletableFuture<Boolean> connect() {
+        LOGGER.info("Connecting to: " + connectionConfig.getAddress());
         this.connectionName = StringUtils.concat("connect#",
                 String.valueOf(CONNECT_NUMBER.getAndIncrement()),
                 "[",
@@ -128,10 +129,12 @@ public class NettyConnection {
         final String address = connectionConfig.getAddress();
         if (!channelFuture.isDone()) {
             final String errMsg = "Client connect to the " + address + " timeout.";
+            LOGGER.info(errMsg);
             completedFuture.completeExceptionally(new ConnectFailedException(errMsg));
             //This is executed in another thread, tlsHandshakeFuture may be null at the critical time
         } else if (sslContext != null && (tlsHandshakeFuture == null || !tlsHandshakeFuture.isDone())) {
             final String errMsg = "Client TSL handshake with " + address + " timeout.";
+            LOGGER.info(errMsg);
             completedFuture.completeExceptionally(new TslHandshakeFailedException(errMsg));
         }
         close();
@@ -145,6 +148,7 @@ public class NettyConnection {
                 ":" +
                 connectionConfig.getPort() +
                 " failure.";
+        LOGGER.info(errMsg);
         completedFuture.completeExceptionally(new ConnectFailedException(errMsg, future.cause()));
     }
 
@@ -181,6 +185,7 @@ public class NettyConnection {
             close();
             final String errMsg = "Client TSL handshake with the " + connectionConfig.getHost() + ":" +
                     connectionConfig.getPort() + " failure.";
+            LOGGER.info(errMsg);
             completedFuture.completeExceptionally(new TslHandshakeFailedException(errMsg, tlsHandshakeFuture.cause()));
         }
     }

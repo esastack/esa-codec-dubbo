@@ -56,6 +56,8 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
                     //Avoiding block the biz code too long while some instance is not connectable,
                     //If the first connection failed, ignore the rest initiation.
                     if (acquireTask.isCompleted() && acquireTask.acquireResult.hasException()) {
+                        LOGGER.info("Break the loop(rang from 0 to %d) while init the pool for %s.",
+                                builder.maxPoolSize, builder.factory.identity(), acquireTask.getException());
                         break;
                     }
                 }
@@ -329,9 +331,11 @@ public class DefaultMultiplexPool<T> implements MultiplexPool<T> {
                 final CompletableFuture<T> future = builder.factory.create();
                 if (block) {
                     try {
-                        future.get();
+                        future.get(builder.maxWaitCreateTime, TimeUnit.MILLISECONDS);
                     } catch (Throwable e) {
-                        //
+                        String errMsg = String.format(
+                                "Connection to %s timeout by unknown reason!", builder.factory.identity());
+                        future.completeExceptionally(new AcquireFailedException(errMsg, e));
                     }
                 }
                 tmp = future.whenComplete(this::handleWhenCreateCompleted);

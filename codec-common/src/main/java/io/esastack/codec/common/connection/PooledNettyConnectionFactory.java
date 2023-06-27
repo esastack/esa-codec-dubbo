@@ -84,4 +84,9 @@ public class PooledNettyConnectionFactory implements PooledObjectFactory<NettyCo
     public Boolean validate(NettyConnection connection) {
         return connection != null && connection.isActive();
     }
+
+    @Override
+    public String identity() {
+        return connectionConfig.getAddress();
+    }
 }
